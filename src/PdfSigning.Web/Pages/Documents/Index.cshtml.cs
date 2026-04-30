@@ -31,22 +31,24 @@ public class IndexModel : PageModel
 
     public async Task OnGetAsync()
     {
-        RecentDocuments = await _documentReadService.GetRecentDocumentsAsync(10);
+        RecentDocuments = await _documentReadService.GetRecentDocumentsAsync(10, GetCurrentUserId());
     }
 
     public async Task<IActionResult> OnPostAsync()
     {
+        var ownerUserId = GetCurrentUserId();
+
         if (PdfFile is null || PdfFile.Length == 0)
         {
             StatusMessage = "Choose a PDF file to upload.";
-            RecentDocuments = await _documentReadService.GetRecentDocumentsAsync(10);
+            RecentDocuments = await _documentReadService.GetRecentDocumentsAsync(10, ownerUserId);
             return Page();
         }
 
         if (!string.Equals(Path.GetExtension(PdfFile.FileName), ".pdf", StringComparison.OrdinalIgnoreCase))
         {
             StatusMessage = "Only .pdf files are allowed.";
-            RecentDocuments = await _documentReadService.GetRecentDocumentsAsync(10);
+            RecentDocuments = await _documentReadService.GetRecentDocumentsAsync(10, ownerUserId);
             return Page();
         }
 
@@ -59,14 +61,6 @@ public class IndexModel : PageModel
         await using (var stream = System.IO.File.Create(savePath))
         {
             await PdfFile.CopyToAsync(stream);
-        }
-
-        var ownerUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        if (string.IsNullOrWhiteSpace(ownerUserId))
-        {
-            StatusMessage = "You must be signed in to upload a PDF.";
-            RecentDocuments = await _documentReadService.GetRecentDocumentsAsync(10);
-            return Page();
         }
 
         var title = Path.GetFileNameWithoutExtension(PdfFile.FileName);
@@ -87,8 +81,14 @@ public class IndexModel : PageModel
         UploadedFileName = PdfFile.FileName;
         UploadedFileUrl = $"/uploads/{safeFileName}";
         StatusMessage = "PDF uploaded successfully and saved to the database.";
-        RecentDocuments = await _documentReadService.GetRecentDocumentsAsync(10);
+        RecentDocuments = await _documentReadService.GetRecentDocumentsAsync(10, ownerUserId);
 
         return Page();
+    }
+
+    private string GetCurrentUserId()
+    {
+        return User.FindFirstValue(ClaimTypes.NameIdentifier)
+            ?? throw new InvalidOperationException("Signed-in user ID was not available.");
     }
 }

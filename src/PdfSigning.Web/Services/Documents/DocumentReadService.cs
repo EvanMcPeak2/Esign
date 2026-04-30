@@ -13,12 +13,12 @@ public sealed class DocumentReadService : IDocumentReadService
         _db = db;
     }
 
-    public async Task<DocumentDetailsDto?> GetDocumentDetailsAsync(Guid documentId, CancellationToken cancellationToken = default)
+    public async Task<DocumentDetailsDto?> GetDocumentDetailsAsync(Guid documentId, string ownerUserId, CancellationToken cancellationToken = default)
     {
         var document = await _db.Documents
             .AsNoTracking()
             .Include(x => x.SignatureFields)
-            .SingleOrDefaultAsync(x => x.Id == documentId, cancellationToken);
+            .SingleOrDefaultAsync(x => x.Id == documentId && x.OwnerUserId == ownerUserId, cancellationToken);
 
         if (document is null)
         {
@@ -51,7 +51,7 @@ public sealed class DocumentReadService : IDocumentReadService
                 .ToList());
     }
 
-    public async Task<IReadOnlyList<DocumentSummaryDto>> GetRecentDocumentsAsync(int take, CancellationToken cancellationToken = default)
+    public async Task<IReadOnlyList<DocumentSummaryDto>> GetRecentDocumentsAsync(int take, string ownerUserId, CancellationToken cancellationToken = default)
     {
         if (take < 1)
         {
@@ -61,6 +61,7 @@ public sealed class DocumentReadService : IDocumentReadService
         return await _db.Documents
             .AsNoTracking()
             .Include(x => x.SignatureFields)
+            .Where(x => x.OwnerUserId == ownerUserId)
             .OrderByDescending(x => x.CreatedAtUtc)
             .Take(take)
             .Select(x => new DocumentSummaryDto(

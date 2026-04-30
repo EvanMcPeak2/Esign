@@ -15,7 +15,7 @@ public sealed class DocumentFieldService : IDocumentFieldService
         _clock = clock;
     }
 
-    public async Task<SignatureFieldDto> AddSignatureFieldAsync(Guid documentId, AddSignatureFieldRequest request, CancellationToken cancellationToken = default)
+    public async Task<SignatureFieldDto?> AddSignatureFieldAsync(Guid documentId, string ownerUserId, AddSignatureFieldRequest request, CancellationToken cancellationToken = default)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(request.Label);
         if (request.PageNumber < 1)
@@ -23,10 +23,10 @@ public sealed class DocumentFieldService : IDocumentFieldService
             throw new ArgumentOutOfRangeException(nameof(request.PageNumber), "Page number must be at least 1.");
         }
 
-        var documentExists = await _db.Documents.AnyAsync(x => x.Id == documentId, cancellationToken);
+        var documentExists = await _db.Documents.AnyAsync(x => x.Id == documentId && x.OwnerUserId == ownerUserId, cancellationToken);
         if (!documentExists)
         {
-            throw new InvalidOperationException($"Document '{documentId}' was not found.");
+            return null;
         }
 
         var entity = new SignatureField
@@ -58,17 +58,24 @@ public sealed class DocumentFieldService : IDocumentFieldService
             entity.CreatedAtUtc);
     }
 
-    public async Task DeleteSignatureFieldAsync(Guid documentId, Guid signatureFieldId, CancellationToken cancellationToken = default)
+    public async Task<bool> DeleteSignatureFieldAsync(Guid documentId, string ownerUserId, Guid signatureFieldId, CancellationToken cancellationToken = default)
     {
+        var documentExists = await _db.Documents.AnyAsync(x => x.Id == documentId && x.OwnerUserId == ownerUserId, cancellationToken);
+        if (!documentExists)
+        {
+            return false;
+        }
+
         var field = await _db.SignatureFields
             .SingleOrDefaultAsync(x => x.Id == signatureFieldId && x.DocumentId == documentId, cancellationToken);
 
         if (field is null)
         {
-            throw new InvalidOperationException($"Signature field '{signatureFieldId}' was not found for document '{documentId}'.");
+            return false;
         }
 
         _db.SignatureFields.Remove(field);
         await _db.SaveChangesAsync(cancellationToken);
+        return true;
     }
 }

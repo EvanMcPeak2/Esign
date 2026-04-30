@@ -8,7 +8,7 @@ namespace PdfSigning.Web.Tests.Services.Documents;
 public class DocumentReadServiceTests
 {
     [Fact]
-    public async Task GetDocumentDetailsAsync_returns_document_with_fields()
+    public async Task GetDocumentDetailsAsync_returns_document_with_fields_for_owner()
     {
         var options = new DbContextOptionsBuilder<ApplicationDbContext>()
             .UseInMemoryDatabase(Guid.NewGuid().ToString())
@@ -51,7 +51,7 @@ public class DocumentReadServiceTests
         await using var verifyDb = new ApplicationDbContext(options);
         var service = new DocumentReadService(verifyDb);
 
-        var result = await service.GetDocumentDetailsAsync(documentId);
+        var result = await service.GetDocumentDetailsAsync(documentId, "user-123");
 
         Assert.NotNull(result);
         Assert.Equal(documentId, result!.Id);
@@ -73,22 +73,39 @@ public class DocumentReadServiceTests
     }
 
     [Fact]
-    public async Task GetDocumentDetailsAsync_returns_null_when_document_is_missing()
+    public async Task GetDocumentDetailsAsync_returns_null_for_other_owner()
     {
         var options = new DbContextOptionsBuilder<ApplicationDbContext>()
             .UseInMemoryDatabase(Guid.NewGuid().ToString())
             .Options;
 
-        await using var db = new ApplicationDbContext(options);
-        var service = new DocumentReadService(db);
+        var documentId = Guid.NewGuid();
 
-        var result = await service.GetDocumentDetailsAsync(Guid.NewGuid());
+        await using (var db = new ApplicationDbContext(options))
+        {
+            db.Documents.Add(new Document
+            {
+                Id = documentId,
+                OwnerUserId = "user-123",
+                Title = "Contract",
+                OriginalFileName = "contract.pdf",
+                StorageKey = "uploads/contract.pdf",
+                Status = DocumentStatus.Draft,
+                CreatedAtUtc = new DateTimeOffset(2026, 1, 2, 15, 30, 0, TimeSpan.Zero),
+            });
+            await db.SaveChangesAsync();
+        }
+
+        await using var verifyDb = new ApplicationDbContext(options);
+        var service = new DocumentReadService(verifyDb);
+
+        var result = await service.GetDocumentDetailsAsync(documentId, "user-999");
 
         Assert.Null(result);
     }
 
     [Fact]
-    public async Task GetRecentDocumentsAsync_returns_newest_documents_first()
+    public async Task GetRecentDocumentsAsync_returns_newest_documents_first_for_owner()
     {
         var options = new DbContextOptionsBuilder<ApplicationDbContext>()
             .UseInMemoryDatabase(Guid.NewGuid().ToString())
@@ -116,6 +133,16 @@ public class DocumentReadServiceTests
                     StorageKey = "uploads/newer.pdf",
                     Status = DocumentStatus.ReadyForSigning,
                     CreatedAtUtc = new DateTimeOffset(2026, 1, 2, 12, 0, 0, TimeSpan.Zero),
+                },
+                new Document
+                {
+                    Id = Guid.NewGuid(),
+                    OwnerUserId = "user-1",
+                    Title = "Newest",
+                    OriginalFileName = "newest.pdf",
+                    StorageKey = "uploads/newest.pdf",
+                    Status = DocumentStatus.ReadyForSigning,
+                    CreatedAtUtc = new DateTimeOffset(2026, 1, 3, 12, 0, 0, TimeSpan.Zero),
                 });
             await db.SaveChangesAsync();
         }
@@ -123,11 +150,11 @@ public class DocumentReadServiceTests
         await using var verifyDb = new ApplicationDbContext(options);
         var service = new DocumentReadService(verifyDb);
 
-        var results = await service.GetRecentDocumentsAsync(10);
+        var results = await service.GetRecentDocumentsAsync(10, "user-1");
 
         Assert.Equal(2, results.Count);
-        Assert.Equal("Newer", results[0].Title);
+        Assert.Equal("Newest", results[0].Title);
         Assert.Equal("Older", results[1].Title);
-        Assert.Equal(DocumentStatus.ReadyForSigning, results[0].Status);
+        Assert.All(results, result => Assert.Equal("user-1", verifyDb.Documents.Single(doc => doc.Id == result.Id).OwnerUserId));
     }
 }

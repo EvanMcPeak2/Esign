@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
@@ -28,11 +29,11 @@ public class DetailsModel : PageModel
 
     public async Task<IActionResult> OnGetAsync(Guid id, string? message = null)
     {
-        Document = await _documentReadService.GetDocumentDetailsAsync(id);
+        var ownerUserId = GetCurrentUserId();
+        Document = await _documentReadService.GetDocumentDetailsAsync(id, ownerUserId);
 
         if (Document is null)
         {
-            StatusMessage = "Document not found.";
             return NotFound();
         }
 
@@ -42,46 +43,67 @@ public class DetailsModel : PageModel
 
     public async Task<IActionResult> OnPostAddFieldAsync(Guid id)
     {
+        var ownerUserId = GetCurrentUserId();
+
         try
         {
-            await _documentFieldService.AddSignatureFieldAsync(id, AddField);
+            var addedField = await _documentFieldService.AddSignatureFieldAsync(id, ownerUserId, AddField);
+
+            if (addedField is null)
+            {
+                return NotFound();
+            }
+
             return RedirectToPage(new { id, message = "Signature field added." });
+        }
+        catch (ArgumentException ex)
+        {
+            StatusMessage = ex.Message;
+            Document = await _documentReadService.GetDocumentDetailsAsync(id, ownerUserId);
+            return Page();
         }
         catch (InvalidOperationException ex)
         {
             StatusMessage = ex.Message;
-            Document = await _documentReadService.GetDocumentDetailsAsync(id);
+            Document = await _documentReadService.GetDocumentDetailsAsync(id, ownerUserId);
             return Page();
         }
     }
 
     public async Task<IActionResult> OnPostDeleteFieldAsync(Guid id, Guid signatureFieldId)
     {
-        try
-        {
-            await _documentFieldService.DeleteSignatureFieldAsync(id, signatureFieldId);
-            return RedirectToPage(new { id, message = "Signature field deleted." });
-        }
-        catch (InvalidOperationException ex)
-        {
-            StatusMessage = ex.Message;
-            Document = await _documentReadService.GetDocumentDetailsAsync(id);
-            return Page();
-        }
+        var ownerUserId = GetCurrentUserId();
+        var deleted = await _documentFieldService.DeleteSignatureFieldAsync(id, ownerUserId, signatureFieldId);
+
+        return deleted ? RedirectToPage(new { id, message = "Signature field deleted." }) : NotFound();
     }
 
     public async Task<IActionResult> OnPostMarkReadyAsync(Guid id)
     {
+        var ownerUserId = GetCurrentUserId();
+
         try
         {
-            await _documentStatusService.MarkReadyForSigningAsync(id);
+            var updated = await _documentStatusService.MarkReadyForSigningAsync(id, ownerUserId);
+
+            if (!updated)
+            {
+                return NotFound();
+            }
+
             return RedirectToPage(new { id, message = "Document marked ready for signing." });
         }
         catch (InvalidOperationException ex)
         {
             StatusMessage = ex.Message;
-            Document = await _documentReadService.GetDocumentDetailsAsync(id);
+            Document = await _documentReadService.GetDocumentDetailsAsync(id, ownerUserId);
             return Page();
         }
+    }
+
+    private string GetCurrentUserId()
+    {
+        return User.FindFirstValue(ClaimTypes.NameIdentifier)
+            ?? throw new InvalidOperationException("Signed-in user ID was not available.");
     }
 }

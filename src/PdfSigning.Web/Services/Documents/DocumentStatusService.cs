@@ -13,15 +13,15 @@ public sealed class DocumentStatusService : IDocumentStatusService
         _db = db;
     }
 
-    public async Task MarkReadyForSigningAsync(Guid documentId, CancellationToken cancellationToken = default)
+    public async Task<bool> MarkReadyForSigningAsync(Guid documentId, string ownerUserId, CancellationToken cancellationToken = default)
     {
         var document = await _db.Documents
             .Include(x => x.SignatureFields)
-            .SingleOrDefaultAsync(x => x.Id == documentId, cancellationToken);
+            .SingleOrDefaultAsync(x => x.Id == documentId && x.OwnerUserId == ownerUserId, cancellationToken);
 
         if (document is null)
         {
-            throw new InvalidOperationException($"Document '{documentId}' was not found.");
+            return false;
         }
 
         if (document.SignatureFields.Count == 0)
@@ -31,5 +31,6 @@ public sealed class DocumentStatusService : IDocumentStatusService
 
         document.Status = DocumentStatus.ReadyForSigning;
         await _db.SaveChangesAsync(cancellationToken);
+        return true;
     }
 }

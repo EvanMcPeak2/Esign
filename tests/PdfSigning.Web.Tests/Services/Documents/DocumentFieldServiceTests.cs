@@ -8,7 +8,7 @@ namespace PdfSigning.Web.Tests.Services.Documents;
 public class DocumentFieldServiceTests
 {
     [Fact]
-    public async Task AddSignatureFieldAsync_persists_field_for_existing_document()
+    public async Task AddSignatureFieldAsync_persists_field_for_existing_document_owner()
     {
         var options = new DbContextOptionsBuilder<ApplicationDbContext>()
             .UseInMemoryDatabase(Guid.NewGuid().ToString())
@@ -35,7 +35,7 @@ public class DocumentFieldServiceTests
         var clock = new FixedClock(new DateTimeOffset(2026, 1, 2, 16, 0, 0, TimeSpan.Zero));
         var service = new DocumentFieldService(verifyDb, clock);
 
-        var result = await service.AddSignatureFieldAsync(documentId, new AddSignatureFieldRequest(
+        var result = await service.AddSignatureFieldAsync(documentId, "user-123", new AddSignatureFieldRequest(
             Label: "Signer 1",
             PageNumber: 2,
             X: 111.25m,
@@ -46,7 +46,8 @@ public class DocumentFieldServiceTests
 
         var saved = await verifyDb.SignatureFields.SingleAsync();
 
-        Assert.Equal(result.Id, saved.Id);
+        Assert.NotNull(result);
+        Assert.Equal(result!.Id, saved.Id);
         Assert.Equal(documentId, saved.DocumentId);
         Assert.Equal("Signer 1", saved.Label);
         Assert.Equal(2, saved.PageNumber);
@@ -59,23 +60,40 @@ public class DocumentFieldServiceTests
     }
 
     [Fact]
-    public async Task AddSignatureFieldAsync_rejects_missing_document()
+    public async Task AddSignatureFieldAsync_returns_null_for_other_owner()
     {
         var options = new DbContextOptionsBuilder<ApplicationDbContext>()
             .UseInMemoryDatabase(Guid.NewGuid().ToString())
             .Options;
 
-        await using var db = new ApplicationDbContext(options);
-        var service = new DocumentFieldService(db, new FixedClock(DateTimeOffset.UtcNow));
+        var documentId = Guid.NewGuid();
 
-        var exception = await Assert.ThrowsAsync<InvalidOperationException>(() =>
-            service.AddSignatureFieldAsync(Guid.NewGuid(), new AddSignatureFieldRequest("Signer 1", 1, 1m, 1m, 1m, 1m)));
+        await using (var db = new ApplicationDbContext(options))
+        {
+            db.Documents.Add(new Document
+            {
+                Id = documentId,
+                OwnerUserId = "user-123",
+                Title = "Contract",
+                OriginalFileName = "contract.pdf",
+                StorageKey = "uploads/contract.pdf",
+                Status = DocumentStatus.Draft,
+                CreatedAtUtc = new DateTimeOffset(2026, 1, 2, 15, 30, 0, TimeSpan.Zero),
+            });
+            await db.SaveChangesAsync();
+        }
 
-        Assert.Contains("Document", exception.Message);
+        await using var verifyDb = new ApplicationDbContext(options);
+        var service = new DocumentFieldService(verifyDb, new FixedClock(DateTimeOffset.UtcNow));
+
+        var result = await service.AddSignatureFieldAsync(documentId, "user-999", new AddSignatureFieldRequest("Signer 1", 1, 1m, 1m, 1m, 1m));
+
+        Assert.Null(result);
+        Assert.Empty(await verifyDb.SignatureFields.ToListAsync());
     }
 
     [Fact]
-    public async Task DeleteSignatureFieldAsync_removes_field_from_document()
+    public async Task DeleteSignatureFieldAsync_removes_field_from_document_owner()
     {
         var options = new DbContextOptionsBuilder<ApplicationDbContext>()
             .UseInMemoryDatabase(Guid.NewGuid().ToString())
@@ -117,9 +135,59 @@ public class DocumentFieldServiceTests
         await using var verifyDb = new ApplicationDbContext(options);
         var service = new DocumentFieldService(verifyDb, new FixedClock(DateTimeOffset.UtcNow));
 
-        await service.DeleteSignatureFieldAsync(documentId, fieldId);
+        var deleted = await service.DeleteSignatureFieldAsync(documentId, "user-123", fieldId);
 
+        Assert.True(deleted);
         Assert.Empty(await verifyDb.SignatureFields.ToListAsync());
+    }
+
+    [Fact]
+    public async Task DeleteSignatureFieldAsync_returns_false_for_other_owner()
+    {
+        var options = new DbContextOptionsBuilder<ApplicationDbContext>()
+            .UseInMemoryDatabase(Guid.NewGuid().ToString())
+            .Options;
+
+        var documentId = Guid.NewGuid();
+        var fieldId = Guid.NewGuid();
+
+        await using (var db = new ApplicationDbContext(options))
+        {
+            db.Documents.Add(new Document
+            {
+                Id = documentId,
+                OwnerUserId = "user-123",
+                Title = "Contract",
+                OriginalFileName = "contract.pdf",
+                StorageKey = "uploads/contract.pdf",
+                Status = DocumentStatus.Draft,
+                CreatedAtUtc = new DateTimeOffset(2026, 1, 2, 15, 30, 0, TimeSpan.Zero),
+                SignatureFields =
+                [
+                    new SignatureField
+                    {
+                        Id = fieldId,
+                        Label = "Signer 1",
+                        PageNumber = 1,
+                        X = 10m,
+                        Y = 20m,
+                        Width = 100m,
+                        Height = 30m,
+                        IsRequired = true,
+                        CreatedAtUtc = new DateTimeOffset(2026, 1, 2, 15, 35, 0, TimeSpan.Zero),
+                    }
+                ]
+            });
+            await db.SaveChangesAsync();
+        }
+
+        await using var verifyDb = new ApplicationDbContext(options);
+        var service = new DocumentFieldService(verifyDb, new FixedClock(DateTimeOffset.UtcNow));
+
+        var deleted = await service.DeleteSignatureFieldAsync(documentId, "user-999", fieldId);
+
+        Assert.False(deleted);
+        Assert.Single(await verifyDb.SignatureFields.ToListAsync());
     }
 
     private sealed class FixedClock : IClock
