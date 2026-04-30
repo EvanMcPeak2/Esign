@@ -1,0 +1,58 @@
+@page
+@model PdfSigning.Web.Pages.Documents.IndexModel
+@{
+    ViewData["Title"] = "Documents";
+}
+
+<div class="row align-items-center mb-4">
+    <div class="col-lg-8">
+        <span class="badge text-bg-dark mb-2">Protected area</span>
+        <h1 class="display-6 fw-semibold mb-2">Documents</h1>
+        <p class="text-body-secondary mb-0">Upload a PDF here to start the signing workflow.</p>
+    </div>
+    <div class="col-lg-4 text-lg-end mt-3 mt-lg-0">
+        <a class="btn btn-primary" href="/">Back to home</a>
+    </div>
+</div>
+
+<div class="row g-4">
+    <div class="col-lg-7">
+        <div class="feature-card rounded-4 p-4 h-100">
+            <h2 class="h4 mb-3">Upload a PDF</h2>
+
+            @if (!string.IsNullOrWhiteSpace(Model.StatusMessage))
+            {
+                <div class="alert @(Model.UploadedFileUrl is null ? "alert-warning" : "alert-success")" role="alert">
+                    @Model.StatusMessage
+                    @if (Model.UploadedFileUrl is not null)
+                    {
+                        <div class="mt-2">
+                            Saved as <strong>@Model.UploadedFileName</strong>.
+                            <a href="@Model.UploadedFileUrl" target="_blank" rel="noopener">Open uploaded file</a>
+                        </div>
+                    }
+                </div>
+            }
+
+            <form method="post" enctype="multipart/form-data" class="upload-form">
+                <div class="mb-3">
+                    <label asp-for="PdfFile" class="form-label">PDF file</label>
+                    <input asp-for="PdfFile" type="file" class="form-control" accept="application/pdf,.pdf" />
+                    <div class="form-text text-body-secondary">Choose a PDF file from your computer.</div>
+                </div>
+                <button type="submit" class="btn btn-primary">Upload PDF</button>
+            </form>
+        </div>
+    </div>
+    <div class="col-lg-5">
+        <div class="status-panel rounded-4 p-4 h-100">
+            <h2 class="h4 mb-3">What happens next</h2>
+            <p class="text-body-secondary">After upload, we can add field placement, secure signing links, and a review screen for the completed PDF.</p>
+            <div class="d-flex flex-wrap gap-2">
+                <span class="badge text-bg-success">Identity ready</span>
+                <span class="badge text-bg-secondary">SQL Server</span>
+                <span class="badge text-bg-secondary">PdfSharpCore</span>
+            </div>
+        </div>
+    </div>
+</div>

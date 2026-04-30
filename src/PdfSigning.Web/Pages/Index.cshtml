@@ -1,0 +1,63 @@
+@page
+@model IndexModel
+@{
+    ViewData["Title"] = "Home";
+}
+
+<section class="hero-card p-4 p-lg-5 mb-4 mb-lg-5 rounded-4">
+    <div class="row align-items-center g-4">
+        <div class="col-lg-7">
+            <span class="badge text-bg-primary-subtle text-primary-emphasis border border-primary-subtle mb-3">v1 preview</span>
+            <h1 class="display-5 fw-semibold text-white mb-3">A cleaner starting point for browser-based PDF signing.</h1>
+            <p class="lead text-body-secondary mb-4">
+                Upload a PDF, place signature fields, and let recipients sign through a secure link — with a UI that feels closer to a real product.
+            </p>
+            <div class="d-flex flex-wrap gap-2">
+                <a class="btn btn-primary btn-lg" href="/Documents">Open Documents</a>
+                <a class="btn btn-outline-light btn-lg" asp-area="Identity" asp-page="/Account/Login">Sign in</a>
+            </div>
+        </div>
+        <div class="col-lg-5">
+            <div class="status-panel rounded-4 p-4 shadow-sm">
+                <p class="text-uppercase text-body-secondary small mb-2">What this version includes</p>
+                <ul class="list-unstyled mb-0 stack-list">
+                    <li>Upload PDFs</li>
+                    <li>Place signature fields</li>
+                    <li>Recipient types a signature</li>
+                    <li>Store the signed output</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</section>
+
+<div class="row g-4">
+    <div class="col-md-6 col-xl-3">
+        <div class="feature-card h-100 rounded-4 p-4">
+            <div class="feature-icon mb-3">1</div>
+            <h2 class="h5">Upload</h2>
+            <p class="text-body-secondary mb-0">Send a PDF into the workflow from the browser.</p>
+        </div>
+    </div>
+    <div class="col-md-6 col-xl-3">
+        <div class="feature-card h-100 rounded-4 p-4">
+            <div class="feature-icon mb-3">2</div>
+            <h2 class="h5">Place fields</h2>
+            <p class="text-body-secondary mb-0">Mark where signatures should appear on the document.</p>
+        </div>
+    </div>
+    <div class="col-md-6 col-xl-3">
+        <div class="feature-card h-100 rounded-4 p-4">
+            <div class="feature-icon mb-3">3</div>
+            <h2 class="h5">Secure link</h2>
+            <p class="text-body-secondary mb-0">Recipients open a signed link to complete the signature.</p>
+        </div>
+    </div>
+    <div class="col-md-6 col-xl-3">
+        <div class="feature-card h-100 rounded-4 p-4">
+            <div class="feature-icon mb-3">4</div>
+            <h2 class="h5">Finalize</h2>
+            <p class="text-body-secondary mb-0">Save the completed PDF for review and download.</p>
+        </div>
+    </div>
+</div>

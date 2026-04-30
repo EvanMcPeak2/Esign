@@ -1,0 +1,83 @@
+:root {
+    color-scheme: dark;
+}
+
+html {
+    font-size: 16px;
+}
+
+body {
+    margin-bottom: 0;
+    background:
+        radial-gradient(circle at top, rgba(13, 110, 253, 0.18), transparent 34%),
+        linear-gradient(180deg, #0b1120 0%, #111827 42%, #0b1220 100%);
+}
+
+.app-shell {
+    color: #e5e7eb;
+}
+
+.app-navbar {
+    background: rgba(10, 15, 30, 0.88);
+    backdrop-filter: blur(14px);
+}
+
+.hero-card,
+.feature-card,
+.status-panel {
+    background: rgba(17, 24, 39, 0.82);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: 0 18px 50px rgba(0, 0, 0, 0.22);
+}
+
+.hero-card {
+    overflow: hidden;
+}
+
+.feature-card,
+.status-panel {
+    transition: transform 0.18s ease, border-color 0.18s ease;
+}
+
+.feature-card:hover,
+.status-panel:hover {
+    transform: translateY(-2px);
+    border-color: rgba(255, 255, 255, 0.16);
+}
+
+.feature-icon {
+    width: 2.5rem;
+    height: 2.5rem;
+    border-radius: 0.875rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(13, 110, 253, 0.16);
+    color: #93c5fd;
+    font-weight: 700;
+}
+
+.stack-list li {
+    padding: 0.5rem 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.stack-list li:last-child {
+    border-bottom: 0;
+}
+
+.modern-list .list-group-item {
+    background: transparent;
+    color: #e5e7eb;
+    border-color: rgba(255, 255, 255, 0.08);
+    padding-left: 0;
+    padding-right: 0;
+}
+
+a {
+    text-decoration: none;
+}
+
+.btn-primary {
+    box-shadow: 0 10px 24px rgba(13, 110, 253, 0.22);
+}

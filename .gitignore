@@ -1,0 +1,11 @@
+.vs/
+bin/
+obj/
+**/bin/
+**/obj/
+**/wwwroot/uploads/
+*.user
+*.suo
+*.cache
+*.log
+.DS_Store
