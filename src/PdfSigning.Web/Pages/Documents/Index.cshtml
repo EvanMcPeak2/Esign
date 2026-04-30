@@ -32,7 +32,7 @@
                             @if (Model.UploadedDocumentId is not null)
                             {
                                 <span class="mx-2">|</span>
-                                <a href="/Documents/@Model.UploadedDocumentId">View database record</a>
+                                <a href="@Url.Page("/Documents/View", new { id = Model.UploadedDocumentId })">View database record</a>
                             }
                         </div>
                     }
@@ -61,7 +61,7 @@
                 <div class="list-group list-group-flush">
                     @foreach (var doc in Model.RecentDocuments)
                     {
-                        <a class="list-group-item list-group-item-action px-0" href="/Documents/@doc.Id">
+                        <a class="list-group-item list-group-item-action px-0" href="@Url.Page("/Documents/View", new { id = doc.Id })">
                             <div class="d-flex justify-content-between align-items-start gap-3">
                                 <div>
                                     <div class="fw-semibold">@doc.Title</div>
