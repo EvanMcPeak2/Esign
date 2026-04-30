@@ -17,6 +17,7 @@ builder.Services.AddSingleton<IClock, SystemClock>();
 builder.Services.AddScoped<IDocumentWorkflowService, DocumentWorkflowService>();
 builder.Services.AddScoped<IDocumentReadService, DocumentReadService>();
 builder.Services.AddScoped<IDocumentFieldService, DocumentFieldService>();
+builder.Services.AddScoped<IDocumentStatusService, DocumentStatusService>();
 
 builder.Services.AddDefaultIdentity<ApplicationUser>(options =>
 {

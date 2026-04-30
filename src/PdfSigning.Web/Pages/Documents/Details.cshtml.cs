@@ -10,11 +10,13 @@ public class DetailsModel : PageModel
 {
     private readonly IDocumentReadService _documentReadService;
     private readonly IDocumentFieldService _documentFieldService;
+    private readonly IDocumentStatusService _documentStatusService;
 
-    public DetailsModel(IDocumentReadService documentReadService, IDocumentFieldService documentFieldService)
+    public DetailsModel(IDocumentReadService documentReadService, IDocumentFieldService documentFieldService, IDocumentStatusService documentStatusService)
     {
         _documentReadService = documentReadService;
         _documentFieldService = documentFieldService;
+        _documentStatusService = documentStatusService;
     }
 
     [BindProperty]
@@ -59,6 +61,21 @@ public class DetailsModel : PageModel
         {
             await _documentFieldService.DeleteSignatureFieldAsync(id, signatureFieldId);
             return RedirectToPage(new { id, message = "Signature field deleted." });
+        }
+        catch (InvalidOperationException ex)
+        {
+            StatusMessage = ex.Message;
+            Document = await _documentReadService.GetDocumentDetailsAsync(id);
+            return Page();
+        }
+    }
+
+    public async Task<IActionResult> OnPostMarkReadyAsync(Guid id)
+    {
+        try
+        {
+            await _documentStatusService.MarkReadyForSigningAsync(id);
+            return RedirectToPage(new { id, message = "Document marked ready for signing." });
         }
         catch (InvalidOperationException ex)
         {

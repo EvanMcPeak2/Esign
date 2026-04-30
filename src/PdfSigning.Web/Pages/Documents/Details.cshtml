@@ -49,8 +49,14 @@ else
 
                 @if (!string.IsNullOrWhiteSpace(Model.Document.StorageKey))
                 {
-                    <div class="mt-3">
+                    <div class="mt-3 d-flex flex-wrap gap-2">
                         <a class="btn btn-primary" href="/@Model.Document.StorageKey" target="_blank" rel="noopener">Open uploaded PDF</a>
+                        @if (Model.Document.Status == PdfSigning.Web.Models.Documents.DocumentStatus.Draft && Model.Document.SignatureFields.Count > 0)
+                        {
+                            <form method="post" asp-page-handler="MarkReady" class="d-inline">
+                                <button type="submit" class="btn btn-success">Mark ready for signing</button>
+                            </form>
+                        }
                     </div>
                 }
             </div>
