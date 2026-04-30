@@ -6,7 +6,8 @@ using PdfSigning.Web.Models;
 var builder = WebApplication.CreateBuilder(args);
 
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
-    ?? throw new InvalidOperationException("Connection string 'DefaultConnection' was not found.");
+    ?? throw new InvalidOperationException(
+        "Connection string 'DefaultConnection' was not found. Set it in .NET User Secrets or an environment variable.");
 
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(connectionString));

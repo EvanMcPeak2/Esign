@@ -4,6 +4,7 @@ obj/
 **/bin/
 **/obj/
 **/wwwroot/uploads/
+.env.local
 *.user
 *.suo
 *.cache
