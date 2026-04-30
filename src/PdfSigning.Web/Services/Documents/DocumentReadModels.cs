@@ -24,3 +24,12 @@ public sealed record DocumentDetailsDto(
     DateTimeOffset CreatedAtUtc,
     DateTimeOffset? CompletedAtUtc,
     IReadOnlyList<SignatureFieldDto> SignatureFields);
+
+public sealed record DocumentSummaryDto(
+    Guid Id,
+    string Title,
+    string OriginalFileName,
+    string? StorageKey,
+    DocumentStatus Status,
+    DateTimeOffset CreatedAtUtc,
+    int SignatureFieldCount);

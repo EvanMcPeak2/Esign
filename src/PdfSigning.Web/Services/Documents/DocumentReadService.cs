@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using PdfSigning.Web.Data;
+using PdfSigning.Web.Models.Documents;
 
 namespace PdfSigning.Web.Services.Documents;
 
@@ -48,5 +49,28 @@ public sealed class DocumentReadService : IDocumentReadService
                     x.IsRequired,
                     x.CreatedAtUtc))
                 .ToList());
+    }
+
+    public async Task<IReadOnlyList<DocumentSummaryDto>> GetRecentDocumentsAsync(int take, CancellationToken cancellationToken = default)
+    {
+        if (take < 1)
+        {
+            throw new ArgumentOutOfRangeException(nameof(take));
+        }
+
+        return await _db.Documents
+            .AsNoTracking()
+            .Include(x => x.SignatureFields)
+            .OrderByDescending(x => x.CreatedAtUtc)
+            .Take(take)
+            .Select(x => new DocumentSummaryDto(
+                x.Id,
+                x.Title,
+                x.OriginalFileName,
+                x.StorageKey,
+                x.Status,
+                x.CreatedAtUtc,
+                x.SignatureFields.Count))
+            .ToListAsync(cancellationToken);
     }
 }

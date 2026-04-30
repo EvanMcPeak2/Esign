@@ -86,4 +86,48 @@ public class DocumentReadServiceTests
 
         Assert.Null(result);
     }
+
+    [Fact]
+    public async Task GetRecentDocumentsAsync_returns_newest_documents_first()
+    {
+        var options = new DbContextOptionsBuilder<ApplicationDbContext>()
+            .UseInMemoryDatabase(Guid.NewGuid().ToString())
+            .Options;
+
+        await using (var db = new ApplicationDbContext(options))
+        {
+            db.Documents.AddRange(
+                new Document
+                {
+                    Id = Guid.NewGuid(),
+                    OwnerUserId = "user-1",
+                    Title = "Older",
+                    OriginalFileName = "older.pdf",
+                    StorageKey = "uploads/older.pdf",
+                    Status = DocumentStatus.Draft,
+                    CreatedAtUtc = new DateTimeOffset(2026, 1, 1, 12, 0, 0, TimeSpan.Zero),
+                },
+                new Document
+                {
+                    Id = Guid.NewGuid(),
+                    OwnerUserId = "user-2",
+                    Title = "Newer",
+                    OriginalFileName = "newer.pdf",
+                    StorageKey = "uploads/newer.pdf",
+                    Status = DocumentStatus.ReadyForSigning,
+                    CreatedAtUtc = new DateTimeOffset(2026, 1, 2, 12, 0, 0, TimeSpan.Zero),
+                });
+            await db.SaveChangesAsync();
+        }
+
+        await using var verifyDb = new ApplicationDbContext(options);
+        var service = new DocumentReadService(verifyDb);
+
+        var results = await service.GetRecentDocumentsAsync(10);
+
+        Assert.Equal(2, results.Count);
+        Assert.Equal("Newer", results[0].Title);
+        Assert.Equal("Older", results[1].Title);
+        Assert.Equal(DocumentStatus.ReadyForSigning, results[0].Status);
+    }
 }

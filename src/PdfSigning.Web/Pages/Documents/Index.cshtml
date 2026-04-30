@@ -51,13 +51,29 @@
     </div>
     <div class="col-lg-5">
         <div class="status-panel rounded-4 p-4 h-100">
-            <h2 class="h4 mb-3">What happens next</h2>
-            <p class="text-body-secondary">After upload, we can add field placement, secure signing links, and a review screen for the completed PDF.</p>
-            <div class="d-flex flex-wrap gap-2">
-                <span class="badge text-bg-success">Identity ready</span>
-                <span class="badge text-bg-secondary">SQL Server</span>
-                <span class="badge text-bg-secondary">PdfSharpCore</span>
-            </div>
+            <h2 class="h4 mb-3">Recent uploads</h2>
+            @if (Model.RecentDocuments.Count == 0)
+            {
+                <p class="text-body-secondary mb-0">No documents have been uploaded yet.</p>
+            }
+            else
+            {
+                <div class="list-group list-group-flush">
+                    @foreach (var doc in Model.RecentDocuments)
+                    {
+                        <a class="list-group-item list-group-item-action px-0" href="/Documents/@doc.Id">
+                            <div class="d-flex justify-content-between align-items-start gap-3">
+                                <div>
+                                    <div class="fw-semibold">@doc.Title</div>
+                                    <div class="small text-body-secondary">@doc.OriginalFileName</div>
+                                    <div class="small text-body-secondary">@doc.Status · @doc.SignatureFieldCount field(s)</div>
+                                </div>
+                                <span class="badge text-bg-secondary">@doc.CreatedAtUtc.ToLocalTime().ToString("g")</span>
+                            </div>
+                        </a>
+                    }
+                </div>
+            }
         </div>
     </div>
 </div>

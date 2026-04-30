@@ -11,11 +11,13 @@ public class IndexModel : PageModel
 {
     private readonly IWebHostEnvironment _environment;
     private readonly IDocumentWorkflowService _documentWorkflowService;
+    private readonly IDocumentReadService _documentReadService;
 
-    public IndexModel(IWebHostEnvironment environment, IDocumentWorkflowService documentWorkflowService)
+    public IndexModel(IWebHostEnvironment environment, IDocumentWorkflowService documentWorkflowService, IDocumentReadService documentReadService)
     {
         _environment = environment;
         _documentWorkflowService = documentWorkflowService;
+        _documentReadService = documentReadService;
     }
 
     [BindProperty]
@@ -25,9 +27,11 @@ public class IndexModel : PageModel
     public string? UploadedFileUrl { get; private set; }
     public string? UploadedFileName { get; private set; }
     public Guid? UploadedDocumentId { get; private set; }
+    public IReadOnlyList<DocumentSummaryDto> RecentDocuments { get; private set; } = Array.Empty<DocumentSummaryDto>();
 
-    public void OnGet()
+    public async Task OnGetAsync()
     {
+        RecentDocuments = await _documentReadService.GetRecentDocumentsAsync(10);
     }
 
     public async Task<IActionResult> OnPostAsync()
@@ -35,12 +39,14 @@ public class IndexModel : PageModel
         if (PdfFile is null || PdfFile.Length == 0)
         {
             StatusMessage = "Choose a PDF file to upload.";
+            RecentDocuments = await _documentReadService.GetRecentDocumentsAsync(10);
             return Page();
         }
 
         if (!string.Equals(Path.GetExtension(PdfFile.FileName), ".pdf", StringComparison.OrdinalIgnoreCase))
         {
             StatusMessage = "Only .pdf files are allowed.";
+            RecentDocuments = await _documentReadService.GetRecentDocumentsAsync(10);
             return Page();
         }
 
@@ -59,6 +65,7 @@ public class IndexModel : PageModel
         if (string.IsNullOrWhiteSpace(ownerUserId))
         {
             StatusMessage = "You must be signed in to upload a PDF.";
+            RecentDocuments = await _documentReadService.GetRecentDocumentsAsync(10);
             return Page();
         }
 
@@ -80,6 +87,7 @@ public class IndexModel : PageModel
         UploadedFileName = PdfFile.FileName;
         UploadedFileUrl = $"/uploads/{safeFileName}";
         StatusMessage = "PDF uploaded successfully and saved to the database.";
+        RecentDocuments = await _documentReadService.GetRecentDocumentsAsync(10);
 
         return Page();
     }
