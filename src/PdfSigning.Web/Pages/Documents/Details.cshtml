@@ -15,6 +15,11 @@
     </div>
 </div>
 
+@if (!string.IsNullOrWhiteSpace(Model.StatusMessage))
+{
+    <div class="alert alert-info" role="alert">@Model.StatusMessage</div>
+}
+
 @if (Model.Document is null)
 {
     <div class="alert alert-warning">Document not found.</div>
@@ -53,6 +58,43 @@ else
         <div class="col-lg-5">
             <div class="status-panel rounded-4 p-4 h-100">
                 <h2 class="h4 mb-3">Signature fields</h2>
+
+                <form method="post" asp-page-handler="AddField" class="mb-4">
+                    <div class="row g-2">
+                        <div class="col-12">
+                            <label asp-for="AddField.Label" class="form-label">Label</label>
+                            <input asp-for="AddField.Label" class="form-control" />
+                        </div>
+                        <div class="col-4">
+                            <label asp-for="AddField.PageNumber" class="form-label">Page</label>
+                            <input asp-for="AddField.PageNumber" class="form-control" type="number" min="1" />
+                        </div>
+                        <div class="col-4">
+                            <label asp-for="AddField.X" class="form-label">X</label>
+                            <input asp-for="AddField.X" class="form-control" type="number" step="0.01" />
+                        </div>
+                        <div class="col-4">
+                            <label asp-for="AddField.Y" class="form-label">Y</label>
+                            <input asp-for="AddField.Y" class="form-control" type="number" step="0.01" />
+                        </div>
+                        <div class="col-6">
+                            <label asp-for="AddField.Width" class="form-label">Width</label>
+                            <input asp-for="AddField.Width" class="form-control" type="number" step="0.01" />
+                        </div>
+                        <div class="col-6">
+                            <label asp-for="AddField.Height" class="form-label">Height</label>
+                            <input asp-for="AddField.Height" class="form-control" type="number" step="0.01" />
+                        </div>
+                        <div class="col-12 form-check mt-2 ms-2">
+                            <input asp-for="AddField.IsRequired" class="form-check-input" />
+                            <label asp-for="AddField.IsRequired" class="form-check-label">Required</label>
+                        </div>
+                        <div class="col-12 mt-2">
+                            <button type="submit" class="btn btn-primary">Add field</button>
+                        </div>
+                    </div>
+                </form>
+
                 @if (Model.Document.SignatureFields.Count == 0)
                 {
                     <p class="text-body-secondary mb-0">No signature fields are stored for this document yet.</p>
@@ -66,6 +108,7 @@ else
                                     <th>Label</th>
                                     <th>Page</th>
                                     <th>Position</th>
+                                    <th></th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -80,6 +123,11 @@ else
                                         <td>
                                             <div class="small">X @field.X, Y @field.Y</div>
                                             <div class="small">W @field.Width, H @field.Height</div>
+                                        </td>
+                                        <td class="text-end">
+                                            <form method="post" asp-page-handler="DeleteField" asp-route-signatureFieldId="@field.Id" onsubmit="return confirm('Delete this field?');">
+                                                <button type="submit" class="btn btn-sm btn-outline-danger">Delete</button>
+                                            </form>
                                         </td>
                                     </tr>
                                 }

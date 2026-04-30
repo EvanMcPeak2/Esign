@@ -16,6 +16,7 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 builder.Services.AddSingleton<IClock, SystemClock>();
 builder.Services.AddScoped<IDocumentWorkflowService, DocumentWorkflowService>();
 builder.Services.AddScoped<IDocumentReadService, DocumentReadService>();
+builder.Services.AddScoped<IDocumentFieldService, DocumentFieldService>();
 
 builder.Services.AddDefaultIdentity<ApplicationUser>(options =>
 {
