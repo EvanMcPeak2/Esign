@@ -1,4 +1,5 @@
-@page "{id:guid}"
+@page "/Documents/{id:guid}"
+@using System.Text.Json
 @model PdfSigning.Web.Pages.Documents.DetailsModel
 @{
     ViewData["Title"] = "Document details";
@@ -29,8 +30,10 @@ else
     <div class="row g-4">
         <div class="col-lg-7">
             <div class="feature-card rounded-4 p-4 h-100">
-                <h2 class="h4 mb-3">Stored PDF</h2>
-                <dl class="row mb-0">
+                <h2 class="h4 mb-2">PDF preview</h2>
+                <p class="text-body-secondary mb-3">Click directly on the page to copy coordinates into the signature field form on the right.</p>
+
+                <dl class="row mb-3 small">
                     <dt class="col-sm-4">Document ID</dt>
                     <dd class="col-sm-8"><code>@Model.Document.Id</code></dd>
 
@@ -42,15 +45,12 @@ else
 
                     <dt class="col-sm-4">Original file</dt>
                     <dd class="col-sm-8">@Model.Document.OriginalFileName</dd>
-
-                    <dt class="col-sm-4">Storage key</dt>
-                    <dd class="col-sm-8"><code>@Model.Document.StorageKey</code></dd>
                 </dl>
 
                 @if (!string.IsNullOrWhiteSpace(Model.Document.StorageKey))
                 {
-                    <div class="mt-3 d-flex flex-wrap gap-2">
-                        <a class="btn btn-primary" href="/@Model.Document.StorageKey" target="_blank" rel="noopener">Open uploaded PDF</a>
+                    <div class="d-flex flex-wrap gap-2 mb-3">
+                        <a class="btn btn-primary" href="/@Model.Document.StorageKey" target="_blank" rel="noopener">Open PDF in new tab</a>
                         @if (Model.Document.Status == PdfSigning.Web.Models.Documents.DocumentStatus.Draft && Model.Document.SignatureFields.Count > 0)
                         {
                             <form method="post" asp-page-handler="MarkReady" class="d-inline">
@@ -58,6 +58,24 @@ else
                             </form>
                         }
                     </div>
+
+                    <div id="pdfPreviewShell"
+                         class="pdf-preview-shell"
+                         data-pdf-url="/@Model.Document.StorageKey"
+                         data-fields='@Html.Raw(JsonSerializer.Serialize(Model.Document.SignatureFields.Select(field => new {
+                             label = field.Label,
+                             pageNumber = field.PageNumber,
+                             x = field.X,
+                             y = field.Y,
+                             width = field.Width,
+                             height = field.Height,
+                             isRequired = field.IsRequired
+                         })))'
+                         data-current-page="@Model.AddField.PageNumber">
+                        <canvas id="pdfPreviewCanvas" class="pdf-preview-canvas"></canvas>
+                        <div id="pdfPreviewOverlay" class="pdf-preview-overlay" aria-hidden="true"></div>
+                    </div>
+                    <div id="pdfPreviewStatus" class="small text-body-secondary mt-2">Loading preview…</div>
                 }
             </div>
         </div>
@@ -144,4 +162,8 @@ else
             </div>
         </div>
     </div>
+}
+
+@section Scripts {
+    <script type="module" src="~/js/document-preview.js" asp-append-version="true"></script>
 }
