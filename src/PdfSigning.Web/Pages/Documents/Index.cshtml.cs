@@ -1,6 +1,8 @@
+using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using PdfSigning.Web.Services.Documents;
 
 namespace PdfSigning.Web.Pages.Documents;
 
@@ -8,10 +10,12 @@ namespace PdfSigning.Web.Pages.Documents;
 public class IndexModel : PageModel
 {
     private readonly IWebHostEnvironment _environment;
+    private readonly IDocumentWorkflowService _documentWorkflowService;
 
-    public IndexModel(IWebHostEnvironment environment)
+    public IndexModel(IWebHostEnvironment environment, IDocumentWorkflowService documentWorkflowService)
     {
         _environment = environment;
+        _documentWorkflowService = documentWorkflowService;
     }
 
     [BindProperty]
@@ -20,6 +24,7 @@ public class IndexModel : PageModel
     public string? StatusMessage { get; private set; }
     public string? UploadedFileUrl { get; private set; }
     public string? UploadedFileName { get; private set; }
+    public Guid? UploadedDocumentId { get; private set; }
 
     public void OnGet()
     {
@@ -50,9 +55,31 @@ public class IndexModel : PageModel
             await PdfFile.CopyToAsync(stream);
         }
 
+        var ownerUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (string.IsNullOrWhiteSpace(ownerUserId))
+        {
+            StatusMessage = "You must be signed in to upload a PDF.";
+            return Page();
+        }
+
+        var title = Path.GetFileNameWithoutExtension(PdfFile.FileName);
+        var request = new CreateDocumentRequest(
+            OwnerUserId: ownerUserId,
+            Title: string.IsNullOrWhiteSpace(title) ? PdfFile.FileName : title,
+            OriginalFileName: PdfFile.FileName,
+            ContentType: PdfFile.ContentType,
+            StorageKey: $"uploads/{safeFileName}",
+            SignatureFields:
+            [
+                new SignatureFieldRequest("Signature", 1, 360m, 720m, 180m, 60m, true)
+            ]);
+
+        var document = await _documentWorkflowService.CreateDocumentAsync(request);
+
+        UploadedDocumentId = document.Id;
         UploadedFileName = PdfFile.FileName;
         UploadedFileUrl = $"/uploads/{safeFileName}";
-        StatusMessage = "PDF uploaded successfully.";
+        StatusMessage = "PDF uploaded successfully and saved to the database.";
 
         return Page();
     }

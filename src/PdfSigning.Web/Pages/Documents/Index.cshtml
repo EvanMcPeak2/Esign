@@ -29,6 +29,11 @@
                         <div class="mt-2">
                             Saved as <strong>@Model.UploadedFileName</strong>.
                             <a href="@Model.UploadedFileUrl" target="_blank" rel="noopener">Open uploaded file</a>
+                            @if (Model.UploadedDocumentId is not null)
+                            {
+                                <span class="mx-2">|</span>
+                                <a href="/Documents/@Model.UploadedDocumentId">View database record</a>
+                            }
                         </div>
                     }
                 </div>

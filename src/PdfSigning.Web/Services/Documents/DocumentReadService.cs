@@ -1,0 +1,52 @@
+using Microsoft.EntityFrameworkCore;
+using PdfSigning.Web.Data;
+
+namespace PdfSigning.Web.Services.Documents;
+
+public sealed class DocumentReadService : IDocumentReadService
+{
+    private readonly ApplicationDbContext _db;
+
+    public DocumentReadService(ApplicationDbContext db)
+    {
+        _db = db;
+    }
+
+    public async Task<DocumentDetailsDto?> GetDocumentDetailsAsync(Guid documentId, CancellationToken cancellationToken = default)
+    {
+        var document = await _db.Documents
+            .AsNoTracking()
+            .Include(x => x.SignatureFields)
+            .SingleOrDefaultAsync(x => x.Id == documentId, cancellationToken);
+
+        if (document is null)
+        {
+            return null;
+        }
+
+        return new DocumentDetailsDto(
+            document.Id,
+            document.OwnerUserId,
+            document.Title,
+            document.OriginalFileName,
+            document.ContentType,
+            document.StorageKey,
+            document.Status,
+            document.CreatedAtUtc,
+            document.CompletedAtUtc,
+            document.SignatureFields
+                .OrderBy(x => x.PageNumber)
+                .ThenBy(x => x.CreatedAtUtc)
+                .Select(x => new SignatureFieldDto(
+                    x.Id,
+                    x.Label,
+                    x.PageNumber,
+                    x.X,
+                    x.Y,
+                    x.Width,
+                    x.Height,
+                    x.IsRequired,
+                    x.CreatedAtUtc))
+                .ToList());
+    }
+}

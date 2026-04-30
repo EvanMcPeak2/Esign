@@ -1,10 +1,1 @@
-namespace PdfSigning.Web.Tests;
-
-public class UnitTest1
-{
-    [Fact]
-    public void PlaceholderTest()
-    {
-        Assert.True(true);
-    }
-}
+// Intentionally left blank. Replace with focused tests in feature-specific files.

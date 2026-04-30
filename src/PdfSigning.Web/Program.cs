@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using PdfSigning.Web.Data;
 using PdfSigning.Web.Models;
+using PdfSigning.Web.Services.Documents;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -11,6 +12,10 @@ var connectionString = builder.Configuration.GetConnectionString("DefaultConnect
 
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(connectionString));
+
+builder.Services.AddSingleton<IClock, SystemClock>();
+builder.Services.AddScoped<IDocumentWorkflowService, DocumentWorkflowService>();
+builder.Services.AddScoped<IDocumentReadService, DocumentReadService>();
 
 builder.Services.AddDefaultIdentity<ApplicationUser>(options =>
 {
