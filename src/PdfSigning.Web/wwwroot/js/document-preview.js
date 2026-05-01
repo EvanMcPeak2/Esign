@@ -320,9 +320,9 @@ if (shell) {
                 fields.splice(index, 1);
             }
 
-            const row = rows?.querySelector(`tr[data-field-id="${CSS.escape(normalizedFieldId)}"]`);
-            if (row) {
-                row.remove();
+            const entry = rows?.querySelector(`[data-field-id="${CSS.escape(normalizedFieldId)}"]`);
+            if (entry) {
+                entry.remove();
             }
 
             state.draft = null;
@@ -336,53 +336,61 @@ if (shell) {
                 return;
             }
 
-            const row = document.createElement('tr');
-            row.dataset.fieldId = field.id;
+            const entry = document.createElement('div');
+            entry.className = 'field-entry rounded-4 p-3';
+            entry.dataset.fieldId = field.id;
 
-            const labelCell = document.createElement('td');
+            const header = document.createElement('div');
+            header.className = 'd-flex align-items-start justify-content-between gap-3';
+
+            const heading = document.createElement('div');
             const label = document.createElement('div');
             label.className = 'fw-semibold';
             label.textContent = field.label;
-            labelCell.appendChild(label);
+            heading.appendChild(label);
 
             const required = document.createElement('div');
-            required.className = 'small text-body-secondary';
+            required.className = 'small text-white-50';
             required.textContent = field.isRequired ? 'Required' : 'Optional';
-            labelCell.appendChild(required);
+            heading.appendChild(required);
 
-            const pageCell = document.createElement('td');
-            pageCell.textContent = String(field.pageNumber);
-
-            const positionCell = document.createElement('td');
-            const firstLine = document.createElement('div');
-            firstLine.className = 'small';
-            firstLine.textContent = `X ${Number(field.x).toFixed(2)}, Y ${Number(field.y).toFixed(2)}`;
-            positionCell.appendChild(firstLine);
-
-            const secondLine = document.createElement('div');
-            secondLine.className = 'small';
-            secondLine.textContent = `W ${Number(field.width).toFixed(2)}, H ${Number(field.height).toFixed(2)}`;
-            positionCell.appendChild(secondLine);
-
-            const actionCell = document.createElement('td');
-            actionCell.className = 'text-end';
-            const form = document.createElement('form');
-            form.method = 'post';
+            const actionCell = document.createElement('form');
+            actionCell.method = 'post';
+            actionCell.dataset.deleteFieldForm = 'true';
+            actionCell.className = 'ms-auto';
             const actionUrl = new URL(window.location.href);
             actionUrl.searchParams.set('handler', 'DeleteField');
             actionUrl.searchParams.set('signatureFieldId', field.id);
-            form.action = actionUrl.toString();
-            form.dataset.deleteFieldForm = 'true';
+            actionCell.action = actionUrl.toString();
 
             const button = document.createElement('button');
             button.type = 'submit';
             button.className = 'btn btn-sm btn-outline-danger';
             button.textContent = 'Delete';
-            form.appendChild(button);
-            actionCell.appendChild(form);
+            actionCell.appendChild(button);
 
-            row.append(labelCell, pageCell, positionCell, actionCell);
-            rows.appendChild(row);
+            header.append(heading, actionCell);
+
+            const meta = document.createElement('div');
+            meta.className = 'field-entry-meta mt-3 d-flex flex-wrap gap-2';
+
+            const pageBadge = document.createElement('span');
+            pageBadge.className = 'badge rounded-pill text-bg-secondary';
+            pageBadge.textContent = `Page ${field.pageNumber}`;
+            meta.appendChild(pageBadge);
+
+            const positionBadge = document.createElement('span');
+            positionBadge.className = 'badge rounded-pill text-bg-dark';
+            positionBadge.textContent = `X ${Number(field.x).toFixed(2)}, Y ${Number(field.y).toFixed(2)}`;
+            meta.appendChild(positionBadge);
+
+            const sizeBadge = document.createElement('span');
+            sizeBadge.className = 'badge rounded-pill text-bg-dark';
+            sizeBadge.textContent = `W ${Number(field.width).toFixed(2)}, H ${Number(field.height).toFixed(2)}`;
+            meta.appendChild(sizeBadge);
+
+            entry.append(header, meta);
+            rows.appendChild(entry);
         };
 
         const handleDeleteFieldSubmit = async (form) => {

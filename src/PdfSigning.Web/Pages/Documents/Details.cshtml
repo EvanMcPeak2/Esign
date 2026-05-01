@@ -8,14 +8,64 @@
         && Model.Document.SignatureFields.Count > 0;
 }
 
-<div class="row align-items-center mb-4">
-    <div class="col-lg-8">
-        <span class="badge text-bg-dark mb-2">Database view</span>
-        <h1 class="display-6 fw-semibold mb-2">@Model.Document?.Title</h1>
-        <p class="text-body-secondary mb-0">This page shows exactly what was saved in SQL Server for the uploaded PDF.</p>
-    </div>
-    <div class="col-lg-4 text-lg-end mt-3 mt-lg-0">
-        <a class="btn btn-outline-secondary" href="/Documents">Back to upload</a>
+<div class="document-hero rounded-4 p-4 p-lg-5 mb-4">
+    <div class="row g-4 align-items-start">
+        <div class="col-lg-8">
+            <div class="d-flex flex-wrap gap-2 mb-3">
+                <span class="badge text-bg-dark">Document workspace</span>
+                <span class="badge rounded-pill text-bg-secondary">@Model.Document?.Status</span>
+                <span class="badge rounded-pill text-bg-light text-dark">@Model.Document?.SignatureFields.Count field(s)</span>
+            </div>
+
+            <h1 class="display-6 fw-semibold mb-2">@Model.Document?.Title</h1>
+            <p class="text-body-secondary mb-0">
+                Preview the PDF, place signature fields, and review exactly what was saved in SQL Server.
+            </p>
+
+            @if (Model.Document is not null)
+            {
+                <div class="document-metadata-grid mt-4">
+                    <div class="document-meta-card">
+                        <div class="small text-uppercase text-body-secondary mb-1">Document ID</div>
+                        <code class="d-block text-break">@Model.Document.Id</code>
+                    </div>
+                    <div class="document-meta-card">
+                        <div class="small text-uppercase text-body-secondary mb-1">Owner user ID</div>
+                        <code class="d-block text-break">@Model.Document.OwnerUserId</code>
+                    </div>
+                    <div class="document-meta-card">
+                        <div class="small text-uppercase text-body-secondary mb-1">Original file</div>
+                        <div class="fw-semibold text-break">@Model.Document.OriginalFileName</div>
+                    </div>
+                    <div class="document-meta-card">
+                        <div class="small text-uppercase text-body-secondary mb-1">Stored file</div>
+                        <div class="fw-semibold text-break">@Model.Document.StorageKey</div>
+                    </div>
+                </div>
+            }
+        </div>
+
+        <div class="col-lg-4">
+            <div class="workspace-actions d-grid gap-2">
+                <a class="btn btn-outline-secondary" href="/Documents">Back to upload</a>
+
+                @if (!string.IsNullOrWhiteSpace(Model.Document?.StorageKey))
+                {
+                    <a class="btn btn-primary" href="/@Model.Document.StorageKey" target="_blank" rel="noopener">Open PDF in new tab</a>
+                }
+
+                <div id="markReadyContainer" class="@(canMarkReady ? string.Empty : "d-none")">
+                    <form method="post" asp-page-handler="MarkReady" class="d-grid">
+                        <button type="submit" class="btn btn-success">Mark ready for signing</button>
+                    </form>
+                </div>
+            </div>
+
+            <div class="preview-note mt-3">
+                <div class="small text-uppercase text-body-secondary mb-1">Tip</div>
+                <div>Drag across the PDF to draw a field. The form on the right updates live.</div>
+            </div>
+        </div>
     </div>
 </div>
 
@@ -30,37 +80,19 @@
 }
 else
 {
-    <div class="row g-4">
+    <div class="row g-4 align-items-start">
         <div class="col-lg-7">
             <div class="feature-card rounded-4 p-4 h-100">
-                <h2 class="h4 mb-2">PDF preview</h2>
-                <p class="text-body-secondary mb-3">Drag on the page to draw a field box. The form on the right updates live, and saving happens without a full page reload.</p>
-
-                <dl class="row mb-3 small">
-                    <dt class="col-sm-4">Document ID</dt>
-                    <dd class="col-sm-8"><code>@Model.Document.Id</code></dd>
-
-                    <dt class="col-sm-4">Owner user ID</dt>
-                    <dd class="col-sm-8"><code>@Model.Document.OwnerUserId</code></dd>
-
-                    <dt class="col-sm-4">Status</dt>
-                    <dd class="col-sm-8">@Model.Document.Status</dd>
-
-                    <dt class="col-sm-4">Original file</dt>
-                    <dd class="col-sm-8">@Model.Document.OriginalFileName</dd>
-                </dl>
+                <div class="d-flex flex-wrap align-items-start justify-content-between gap-2 mb-3">
+                    <div>
+                        <h2 class="h4 mb-1">PDF preview</h2>
+                        <p class="text-body-secondary mb-0">Click and drag on the page to position a signature field.</p>
+                    </div>
+                    <span class="badge rounded-pill text-bg-primary-subtle text-primary-emphasis preview-badge">Page 1</span>
+                </div>
 
                 @if (!string.IsNullOrWhiteSpace(Model.Document.StorageKey))
                 {
-                    <div class="d-flex flex-wrap gap-2 mb-3">
-                        <a class="btn btn-primary" href="/@Model.Document.StorageKey" target="_blank" rel="noopener">Open PDF in new tab</a>
-                        <div id="markReadyContainer" class="@(canMarkReady ? string.Empty : "d-none")">
-                            <form method="post" asp-page-handler="MarkReady" class="d-inline">
-                                <button type="submit" class="btn btn-success">Mark ready for signing</button>
-                            </form>
-                        </div>
-                    </div>
-
                     <div id="pdfPreviewShell"
                          class="pdf-preview-shell"
                          data-pdf-url="/@Model.Document.StorageKey"
@@ -83,93 +115,110 @@ else
                     </div>
                     <div id="pdfPreviewStatus" class="small text-body-secondary mt-2">Loading preview…</div>
                 }
+                else
+                {
+                    <div class="preview-placeholder rounded-4 p-4 text-center text-body-secondary">
+                        The uploaded PDF is missing a storage path, so the inline preview cannot load.
+                    </div>
+                }
             </div>
         </div>
         <div class="col-lg-5">
             <div class="status-panel rounded-4 p-4 h-100">
-                <h2 class="h4 mb-3">Signature fields</h2>
-
-                <form method="post" asp-page-handler="AddField" id="addFieldForm" class="mb-4">
-                    <div class="row g-2">
-                        <div class="col-12">
-                            <label asp-for="AddField.Label" class="form-label">Label</label>
-                            <input asp-for="AddField.Label" class="form-control" />
-                        </div>
-                        <div class="col-4">
-                            <label asp-for="AddField.PageNumber" class="form-label">Page</label>
-                            <input asp-for="AddField.PageNumber" class="form-control" type="number" min="1" />
-                        </div>
-                        <div class="col-4">
-                            <label asp-for="AddField.X" class="form-label">X</label>
-                            <input asp-for="AddField.X" class="form-control" type="number" step="0.01" />
-                        </div>
-                        <div class="col-4">
-                            <label asp-for="AddField.Y" class="form-label">Y</label>
-                            <input asp-for="AddField.Y" class="form-control" type="number" step="0.01" />
-                        </div>
-                        <div class="col-6">
-                            <label asp-for="AddField.Width" class="form-label">Width</label>
-                            <input asp-for="AddField.Width" class="form-control" type="number" step="0.01" />
-                        </div>
-                        <div class="col-6">
-                            <label asp-for="AddField.Height" class="form-label">Height</label>
-                            <input asp-for="AddField.Height" class="form-control" type="number" step="0.01" />
-                        </div>
-                        <div class="col-12 form-check mt-2 ms-2">
-                            <input asp-for="AddField.IsRequired" class="form-check-input" />
-                            <label asp-for="AddField.IsRequired" class="form-check-label">Required</label>
-                        </div>
-                        <div class="col-12 mt-2 d-flex gap-2 align-items-center">
-                            <button type="submit" class="btn btn-primary">Add field</button>
-                            <span class="small text-body-secondary">Use the box on the left to fill these coordinates automatically.</span>
-                        </div>
+                <div class="d-flex flex-wrap align-items-start justify-content-between gap-2 mb-4">
+                    <div>
+                        <h2 class="h4 mb-1">Signature fields</h2>
+                        <p class="text-body-secondary mb-0">Adjust the numbers manually or draw a box on the preview to populate them.</p>
                     </div>
-                </form>
+                    <span class="badge rounded-pill text-bg-light text-dark">Live sync</span>
+                </div>
 
-                @if (Model.Document.SignatureFields.Count == 0)
-                {
-                    <p id="signatureFieldEmptyState" class="text-body-secondary mb-0">No signature fields are stored for this document yet.</p>
-                }
-                else
-                {
-                    <p id="signatureFieldEmptyState" class="text-body-secondary mb-0 d-none">No signature fields are stored for this document yet.</p>
-                }
+                <div class="section-card rounded-4 p-3 p-lg-4 mb-4">
+                    <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
+                        <h3 class="h6 mb-0 text-uppercase text-body-secondary letter-spaced">Create a field</h3>
+                        <span class="small text-body-secondary">Use the preview to fill coordinates automatically.</span>
+                    </div>
 
-                <div class="table-responsive mt-3">
-                    <table class="table table-sm align-middle mb-0">
-                        <thead>
-                            <tr>
-                                <th>Label</th>
-                                <th>Page</th>
-                                <th>Position</th>
-                                <th></th>
-                            </tr>
-                        </thead>
-                        <tbody id="signatureFieldRows">
-                            @foreach (var field in Model.Document.SignatureFields)
-                            {
-                                <tr data-field-id="@field.Id">
-                                    <td>
+                    <form method="post" asp-page-handler="AddField" id="addFieldForm">
+                        <div class="row g-3">
+                            <div class="col-12">
+                                <label asp-for="AddField.Label" class="form-label">Label</label>
+                                <input asp-for="AddField.Label" class="form-control" />
+                            </div>
+                            <div class="col-6">
+                                <label asp-for="AddField.PageNumber" class="form-label">Page</label>
+                                <input asp-for="AddField.PageNumber" class="form-control" type="number" min="1" />
+                            </div>
+                            <div class="col-6">
+                                <label asp-for="AddField.X" class="form-label">X</label>
+                                <input asp-for="AddField.X" class="form-control" type="number" step="0.01" />
+                            </div>
+                            <div class="col-6">
+                                <label asp-for="AddField.Y" class="form-label">Y</label>
+                                <input asp-for="AddField.Y" class="form-control" type="number" step="0.01" />
+                            </div>
+                            <div class="col-6">
+                                <label asp-for="AddField.Width" class="form-label">Width</label>
+                                <input asp-for="AddField.Width" class="form-control" type="number" step="0.01" />
+                            </div>
+                            <div class="col-6">
+                                <label asp-for="AddField.Height" class="form-label">Height</label>
+                                <input asp-for="AddField.Height" class="form-control" type="number" step="0.01" />
+                            </div>
+                            <div class="col-6 d-flex align-items-end">
+                                <div class="form-check mt-4 mt-lg-0">
+                                    <input asp-for="AddField.IsRequired" class="form-check-input" />
+                                    <label asp-for="AddField.IsRequired" class="form-check-label">Required</label>
+                                </div>
+                            </div>
+                            <div class="col-12 d-grid gap-2 mt-2">
+                                <button type="submit" class="btn btn-primary btn-lg">Add field</button>
+                                <div class="small text-body-secondary">The field is saved to the database immediately and appears in the list below.</div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+
+                <div class="section-card rounded-4 p-3 p-lg-4">
+                    <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
+                        <h3 class="h6 mb-0 text-uppercase text-body-secondary letter-spaced">Saved fields</h3>
+                        <span class="small text-body-secondary">@Model.Document.SignatureFields.Count total</span>
+                    </div>
+
+                    @if (Model.Document.SignatureFields.Count == 0)
+                    {
+                        <p id="signatureFieldEmptyState" class="text-body-secondary mb-0">No signature fields are stored for this document yet.</p>
+                    }
+                    else
+                    {
+                        <p id="signatureFieldEmptyState" class="text-body-secondary mb-3 d-none">No signature fields are stored for this document yet.</p>
+                    }
+
+                    <div id="signatureFieldRows" class="field-list d-grid gap-2">
+                        @foreach (var field in Model.Document.SignatureFields)
+                        {
+                            <div class="field-entry rounded-4 p-3" data-field-id="@field.Id">
+                                <div class="d-flex align-items-start justify-content-between gap-3">
+                                    <div>
                                         <div class="fw-semibold">@field.Label</div>
-                                        <div class="small text-body-secondary">@(field.IsRequired ? "Required" : "Optional")</div>
-                                    </td>
-                                    <td>@field.PageNumber</td>
-                                    <td>
-                                        <div class="small">X @field.X, Y @field.Y</div>
-                                        <div class="small">W @field.Width, H @field.Height</div>
-                                    </td>
-                                    <td class="text-end">
-                                        <form method="post"
-                                              asp-page-handler="DeleteField"
-                                              asp-route-signatureFieldId="@field.Id"
-                                              data-delete-field-form="true">
-                                            <button type="submit" class="btn btn-sm btn-outline-danger">Delete</button>
-                                        </form>
-                                    </td>
-                                </tr>
-                            }
-                        </tbody>
-                    </table>
+                                        <div class="small text-white-50">@(field.IsRequired ? "Required" : "Optional")</div>
+                                    </div>
+                                    <form method="post"
+                                          asp-page-handler="DeleteField"
+                                          asp-route-signatureFieldId="@field.Id"
+                                          data-delete-field-form="true"
+                                          class="ms-auto">
+                                        <button type="submit" class="btn btn-sm btn-outline-danger">Delete</button>
+                                    </form>
+                                </div>
+                                <div class="field-entry-meta mt-3 d-flex flex-wrap gap-2">
+                                    <span class="badge rounded-pill text-bg-secondary">Page @field.PageNumber</span>
+                                    <span class="badge rounded-pill text-bg-dark">X @field.X, Y @field.Y</span>
+                                    <span class="badge rounded-pill text-bg-dark">W @field.Width, H @field.Height</span>
+                                </div>
+                            </div>
+                        }
+                    </div>
                 </div>
             </div>
         </div>
