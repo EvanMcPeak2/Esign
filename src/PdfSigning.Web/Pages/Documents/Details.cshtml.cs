@@ -96,9 +96,26 @@ public class DetailsModel : PageModel
     public async Task<IActionResult> OnPostDeleteFieldAsync(Guid id, Guid signatureFieldId)
     {
         var ownerUserId = GetCurrentUserId();
+        var wantsJson = WantsJsonResponse();
         var deleted = await _documentFieldService.DeleteSignatureFieldAsync(id, ownerUserId, signatureFieldId);
 
-        return deleted ? RedirectToPage(new { id, message = "Signature field deleted." }) : NotFound();
+        if (!deleted)
+        {
+            return wantsJson
+                ? NotFound(new { message = "Signature field not found." })
+                : NotFound();
+        }
+
+        if (wantsJson)
+        {
+            return new JsonResult(new
+            {
+                message = "Signature field deleted.",
+                deletedFieldId = signatureFieldId,
+            });
+        }
+
+        return RedirectToPage(new { id, message = "Signature field deleted." });
     }
 
     public async Task<IActionResult> OnPostMarkReadyAsync(Guid id)

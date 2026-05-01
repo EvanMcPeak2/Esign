@@ -159,7 +159,10 @@ else
                                         <div class="small">W @field.Width, H @field.Height</div>
                                     </td>
                                     <td class="text-end">
-                                        <form method="post" asp-page-handler="DeleteField" asp-route-signatureFieldId="@field.Id" onsubmit="return confirm('Delete this field?');">
+                                        <form method="post"
+                                              asp-page-handler="DeleteField"
+                                              asp-route-signatureFieldId="@field.Id"
+                                              data-delete-field-form="true">
                                             <button type="submit" class="btn btn-sm btn-outline-danger">Delete</button>
                                         </form>
                                     </td>

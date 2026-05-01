@@ -312,6 +312,25 @@ if (shell) {
             }
         };
 
+        const removeFieldById = (fieldId) => {
+            const normalizedFieldId = String(fieldId);
+            const index = fields.findIndex((field) => String(field.id) === normalizedFieldId);
+
+            if (index >= 0) {
+                fields.splice(index, 1);
+            }
+
+            const row = rows?.querySelector(`tr[data-field-id="${CSS.escape(normalizedFieldId)}"]`);
+            if (row) {
+                row.remove();
+            }
+
+            state.draft = null;
+            renderBoxes();
+            updateEmptyState();
+            updateReadyButton();
+        };
+
         const appendFieldRow = (field) => {
             if (!rows) {
                 return;
@@ -353,7 +372,7 @@ if (shell) {
             actionUrl.searchParams.set('handler', 'DeleteField');
             actionUrl.searchParams.set('signatureFieldId', field.id);
             form.action = actionUrl.toString();
-            form.onsubmit = () => window.confirm('Delete this field?');
+            form.dataset.deleteFieldForm = 'true';
 
             const button = document.createElement('button');
             button.type = 'submit';
@@ -365,6 +384,54 @@ if (shell) {
             row.append(labelCell, pageCell, positionCell, actionCell);
             rows.appendChild(row);
         };
+
+        const handleDeleteFieldSubmit = async (form) => {
+            if (!form) {
+                return;
+            }
+
+            const action = form.action || window.location.href;
+            const response = await fetch(action, {
+                method: 'POST',
+                body: new FormData(form),
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    Accept: 'application/json',
+                },
+                credentials: 'same-origin',
+            });
+
+            const contentType = response.headers.get('content-type') || '';
+            const payload = contentType.includes('application/json')
+                ? await response.json()
+                : { message: await response.text() };
+
+            if (!response.ok) {
+                throw new Error(payload?.message || 'Unable to delete the field.');
+            }
+
+            const deletedFieldId = payload?.deletedFieldId || new URL(action).searchParams.get('signatureFieldId');
+            removeFieldById(deletedFieldId);
+            setStatus(payload?.message || 'Signature field deleted.');
+        };
+
+        rows?.addEventListener('submit', (event) => {
+            const form = event.target instanceof HTMLFormElement ? event.target : null;
+            if (!form || form.dataset.deleteFieldForm !== 'true') {
+                return;
+            }
+
+            event.preventDefault();
+
+            if (!window.confirm('Delete this field?')) {
+                return;
+            }
+
+            handleDeleteFieldSubmit(form).catch((error) => {
+                console.error(error);
+                setStatus(error instanceof Error ? error.message : 'Unable to delete the field.');
+            });
+        });
 
         const handlePointerDown = (event) => {
             if (event.button !== 0) {
