@@ -341,16 +341,18 @@ if (shell) {
             entry.dataset.fieldId = field.id;
 
             const header = document.createElement('div');
-            header.className = 'd-flex align-items-start justify-content-between gap-3';
+            header.className = 'd-flex align-items-center justify-content-between gap-3';
 
             const heading = document.createElement('div');
+            heading.className = 'd-flex flex-wrap align-items-center gap-2';
+
             const label = document.createElement('div');
             label.className = 'fw-semibold';
             label.textContent = field.label;
             heading.appendChild(label);
 
-            const required = document.createElement('div');
-            required.className = 'small text-white-50';
+            const required = document.createElement('span');
+            required.className = 'badge rounded-pill text-bg-secondary';
             required.textContent = field.isRequired ? 'Required' : 'Optional';
             heading.appendChild(required);
 
@@ -370,26 +372,7 @@ if (shell) {
             actionCell.appendChild(button);
 
             header.append(heading, actionCell);
-
-            const meta = document.createElement('div');
-            meta.className = 'field-entry-meta mt-3 d-flex flex-wrap gap-2';
-
-            const pageBadge = document.createElement('span');
-            pageBadge.className = 'badge rounded-pill text-bg-secondary';
-            pageBadge.textContent = `Page ${field.pageNumber}`;
-            meta.appendChild(pageBadge);
-
-            const positionBadge = document.createElement('span');
-            positionBadge.className = 'badge rounded-pill text-bg-dark';
-            positionBadge.textContent = `X ${Number(field.x).toFixed(2)}, Y ${Number(field.y).toFixed(2)}`;
-            meta.appendChild(positionBadge);
-
-            const sizeBadge = document.createElement('span');
-            sizeBadge.className = 'badge rounded-pill text-bg-dark';
-            sizeBadge.textContent = `W ${Number(field.width).toFixed(2)}, H ${Number(field.height).toFixed(2)}`;
-            meta.appendChild(sizeBadge);
-
-            entry.append(header, meta);
+            entry.appendChild(header);
             rows.appendChild(entry);
         };
 
@@ -430,11 +413,6 @@ if (shell) {
             }
 
             event.preventDefault();
-
-            if (!window.confirm('Delete this field?')) {
-                return;
-            }
-
             handleDeleteFieldSubmit(form).catch((error) => {
                 console.error(error);
                 setStatus(error instanceof Error ? error.message : 'Unable to delete the field.');

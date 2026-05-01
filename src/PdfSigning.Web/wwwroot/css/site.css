@@ -86,27 +86,10 @@ body {
     padding-right: 0;
 }
 
-.document-metadata-grid {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 0.75rem;
-}
-
-@media (max-width: 767.98px) {
-    .document-metadata-grid {
-        grid-template-columns: 1fr;
-    }
-}
-
-.document-meta-card,
 .preview-note,
 .preview-placeholder {
     border-radius: 1rem;
     padding: 1rem;
-}
-
-.document-meta-card code {
-    color: #e5e7eb;
 }
 
 .workspace-actions .btn {
@@ -116,11 +99,6 @@ body {
 
 .preview-note {
     color: #cbd5e1;
-}
-
-.preview-badge {
-    letter-spacing: 0.04em;
-    text-transform: uppercase;
 }
 
 .letter-spaced {
@@ -143,10 +121,6 @@ body {
 
 .field-entry:hover {
     border-color: rgba(255, 255, 255, 0.16);
-}
-
-.field-entry-meta .badge {
-    letter-spacing: 0.02em;
 }
 
 .field-entry .btn-outline-danger {
