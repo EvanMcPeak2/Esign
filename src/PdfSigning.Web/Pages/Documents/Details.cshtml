@@ -3,6 +3,9 @@
 @model PdfSigning.Web.Pages.Documents.DetailsModel
 @{
     ViewData["Title"] = "Document details";
+    var canMarkReady = Model.Document is not null
+        && Model.Document.Status == PdfSigning.Web.Models.Documents.DocumentStatus.Draft
+        && Model.Document.SignatureFields.Count > 0;
 }
 
 <div class="row align-items-center mb-4">
@@ -31,7 +34,7 @@ else
         <div class="col-lg-7">
             <div class="feature-card rounded-4 p-4 h-100">
                 <h2 class="h4 mb-2">PDF preview</h2>
-                <p class="text-body-secondary mb-3">Click directly on the page to copy coordinates into the signature field form on the right.</p>
+                <p class="text-body-secondary mb-3">Drag on the page to draw a field box. The form on the right updates live, and saving happens without a full page reload.</p>
 
                 <dl class="row mb-3 small">
                     <dt class="col-sm-4">Document ID</dt>
@@ -51,18 +54,20 @@ else
                 {
                     <div class="d-flex flex-wrap gap-2 mb-3">
                         <a class="btn btn-primary" href="/@Model.Document.StorageKey" target="_blank" rel="noopener">Open PDF in new tab</a>
-                        @if (Model.Document.Status == PdfSigning.Web.Models.Documents.DocumentStatus.Draft && Model.Document.SignatureFields.Count > 0)
-                        {
+                        <div id="markReadyContainer" class="@(canMarkReady ? string.Empty : "d-none")">
                             <form method="post" asp-page-handler="MarkReady" class="d-inline">
                                 <button type="submit" class="btn btn-success">Mark ready for signing</button>
                             </form>
-                        }
+                        </div>
                     </div>
 
                     <div id="pdfPreviewShell"
                          class="pdf-preview-shell"
                          data-pdf-url="/@Model.Document.StorageKey"
+                         data-document-id="@Model.Document.Id"
+                         data-document-status="@Model.Document.Status"
                          data-fields='@Html.Raw(JsonSerializer.Serialize(Model.Document.SignatureFields.Select(field => new {
+                             id = field.Id,
                              label = field.Label,
                              pageNumber = field.PageNumber,
                              x = field.X,
@@ -74,6 +79,7 @@ else
                          data-current-page="@Model.AddField.PageNumber">
                         <canvas id="pdfPreviewCanvas" class="pdf-preview-canvas"></canvas>
                         <div id="pdfPreviewOverlay" class="pdf-preview-overlay" aria-hidden="true"></div>
+                        <div id="pdfPreviewDraft" class="pdf-preview-draft" aria-hidden="true"></div>
                     </div>
                     <div id="pdfPreviewStatus" class="small text-body-secondary mt-2">Loading preview…</div>
                 }
@@ -83,7 +89,7 @@ else
             <div class="status-panel rounded-4 p-4 h-100">
                 <h2 class="h4 mb-3">Signature fields</h2>
 
-                <form method="post" asp-page-handler="AddField" class="mb-4">
+                <form method="post" asp-page-handler="AddField" id="addFieldForm" class="mb-4">
                     <div class="row g-2">
                         <div class="col-12">
                             <label asp-for="AddField.Label" class="form-label">Label</label>
@@ -113,52 +119,55 @@ else
                             <input asp-for="AddField.IsRequired" class="form-check-input" />
                             <label asp-for="AddField.IsRequired" class="form-check-label">Required</label>
                         </div>
-                        <div class="col-12 mt-2">
+                        <div class="col-12 mt-2 d-flex gap-2 align-items-center">
                             <button type="submit" class="btn btn-primary">Add field</button>
+                            <span class="small text-body-secondary">Use the box on the left to fill these coordinates automatically.</span>
                         </div>
                     </div>
                 </form>
 
                 @if (Model.Document.SignatureFields.Count == 0)
                 {
-                    <p class="text-body-secondary mb-0">No signature fields are stored for this document yet.</p>
+                    <p id="signatureFieldEmptyState" class="text-body-secondary mb-0">No signature fields are stored for this document yet.</p>
                 }
                 else
                 {
-                    <div class="table-responsive">
-                        <table class="table table-sm align-middle mb-0">
-                            <thead>
-                                <tr>
-                                    <th>Label</th>
-                                    <th>Page</th>
-                                    <th>Position</th>
-                                    <th></th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @foreach (var field in Model.Document.SignatureFields)
-                                {
-                                    <tr>
-                                        <td>
-                                            <div class="fw-semibold">@field.Label</div>
-                                            <div class="small text-body-secondary">@(field.IsRequired ? "Required" : "Optional")</div>
-                                        </td>
-                                        <td>@field.PageNumber</td>
-                                        <td>
-                                            <div class="small">X @field.X, Y @field.Y</div>
-                                            <div class="small">W @field.Width, H @field.Height</div>
-                                        </td>
-                                        <td class="text-end">
-                                            <form method="post" asp-page-handler="DeleteField" asp-route-signatureFieldId="@field.Id" onsubmit="return confirm('Delete this field?');">
-                                                <button type="submit" class="btn btn-sm btn-outline-danger">Delete</button>
-                                            </form>
-                                        </td>
-                                    </tr>
-                                }
-                            </tbody>
-                        </table>
-                    </div>
+                    <p id="signatureFieldEmptyState" class="text-body-secondary mb-0 d-none">No signature fields are stored for this document yet.</p>
                 }
+
+                <div class="table-responsive mt-3">
+                    <table class="table table-sm align-middle mb-0">
+                        <thead>
+                            <tr>
+                                <th>Label</th>
+                                <th>Page</th>
+                                <th>Position</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody id="signatureFieldRows">
+                            @foreach (var field in Model.Document.SignatureFields)
+                            {
+                                <tr data-field-id="@field.Id">
+                                    <td>
+                                        <div class="fw-semibold">@field.Label</div>
+                                        <div class="small text-body-secondary">@(field.IsRequired ? "Required" : "Optional")</div>
+                                    </td>
+                                    <td>@field.PageNumber</td>
+                                    <td>
+                                        <div class="small">X @field.X, Y @field.Y</div>
+                                        <div class="small">W @field.Width, H @field.Height</div>
+                                    </td>
+                                    <td class="text-end">
+                                        <form method="post" asp-page-handler="DeleteField" asp-route-signatureFieldId="@field.Id" onsubmit="return confirm('Delete this field?');">
+                                            <button type="submit" class="btn btn-sm btn-outline-danger">Delete</button>
+                                        </form>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
     </div>

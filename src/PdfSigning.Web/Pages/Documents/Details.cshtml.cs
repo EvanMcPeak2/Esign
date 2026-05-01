@@ -1,3 +1,4 @@
+using System.Linq;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -44,6 +45,7 @@ public class DetailsModel : PageModel
     public async Task<IActionResult> OnPostAddFieldAsync(Guid id)
     {
         var ownerUserId = GetCurrentUserId();
+        var wantsJson = WantsJsonResponse();
 
         try
         {
@@ -51,19 +53,40 @@ public class DetailsModel : PageModel
 
             if (addedField is null)
             {
-                return NotFound();
+                return wantsJson
+                    ? NotFound(new { message = "Document not found." })
+                    : NotFound();
+            }
+
+            if (wantsJson)
+            {
+                return new JsonResult(new
+                {
+                    message = "Signature field added.",
+                    field = addedField,
+                });
             }
 
             return RedirectToPage(new { id, message = "Signature field added." });
         }
         catch (ArgumentException ex)
         {
+            if (wantsJson)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+
             StatusMessage = ex.Message;
             Document = await _documentReadService.GetDocumentDetailsAsync(id, ownerUserId);
             return Page();
         }
         catch (InvalidOperationException ex)
         {
+            if (wantsJson)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+
             StatusMessage = ex.Message;
             Document = await _documentReadService.GetDocumentDetailsAsync(id, ownerUserId);
             return Page();
@@ -105,5 +128,11 @@ public class DetailsModel : PageModel
     {
         return User.FindFirstValue(ClaimTypes.NameIdentifier)
             ?? throw new InvalidOperationException("Signed-in user ID was not available.");
+    }
+
+    private bool WantsJsonResponse()
+    {
+        return string.Equals(Request.Headers["X-Requested-With"], "XMLHttpRequest", StringComparison.OrdinalIgnoreCase)
+            || Request.Headers["Accept"].ToString().Contains("application/json", StringComparison.OrdinalIgnoreCase);
     }
 }
