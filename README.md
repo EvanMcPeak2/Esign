@@ -51,6 +51,20 @@ High-level flow:
 8. App generates a separate signed PDF artifact and stores it privately
 9. Owner downloads the signed PDF artifact from an authenticated route
 
+## Demo walkthrough
+
+A simple demo run should look like this:
+
+1. Owner signs in
+2. Owner uploads a sample PDF
+3. Owner places one or more required signature fields
+4. Owner creates a signing link for a sample recipient email
+5. Owner copies the generated link and shares it manually for the demo
+6. Recipient opens the link and confirms the expected email address
+7. Recipient opens the protected PDF and completes signing with a typed name
+8. App marks the session complete, updates the document status, and generates a signed PDF artifact
+9. Owner returns to the document details page and downloads the final signed PDF artifact
+
 ## Project structure
 
 - `src/PdfSigning.Web/` — main web application
@@ -58,6 +72,9 @@ High-level flow:
 - `src/PdfSigning.Web/Services/Documents/` — document storage, read, workflow, signing, and artifact services
 - `src/PdfSigning.Web/Data/` — EF Core DbContext and migrations
 - `tests/PdfSigning.Web.Tests/` — unit and page-model tests
+- `docs/PDFSIGNING_PROJECT_MAP.md` — master demo-delivery and implementation plan
+- `docs/DEPLOYMENT_READINESS_CHECKLIST.md` — deployment and secret-hygiene checklist
+- `docs/plans/` — targeted implementation plans for discrete work items
 - `docker-compose.yml` — local SQL Server definition
 
 ## Local development setup
