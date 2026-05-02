@@ -60,7 +60,7 @@ public class DocumentSigningServiceTests
 
         await using var verifyDb = new ApplicationDbContext(options);
         var clock = new FixedClock(new DateTimeOffset(2026, 1, 4, 12, 0, 0, TimeSpan.Zero));
-        var service = new DocumentSigningService(verifyDb, clock);
+        var service = new DocumentSigningService(verifyDb, clock, new StubSignedDocumentArtifactService());
 
         var result = await service.CreateSigningSessionAsync(documentId, "owner-1", new CreateSigningSessionRequest(
             RecipientEmail: "signer@example.com"));
@@ -122,7 +122,7 @@ public class DocumentSigningServiceTests
 
         await using var verifyDb = new ApplicationDbContext(options);
         var clock = new FixedClock(new DateTimeOffset(2026, 1, 4, 12, 0, 0, TimeSpan.Zero));
-        var service = new DocumentSigningService(verifyDb, clock);
+        var service = new DocumentSigningService(verifyDb, clock, new StubSignedDocumentArtifactService());
 
         var badToken = await service.GetSigningSessionAsync(sessionId, "wrong-token", "signer@example.com");
         var badEmail = await service.GetSigningSessionAsync(sessionId, "valid-token", "other@example.com");
@@ -190,7 +190,11 @@ public class DocumentSigningServiceTests
 
         await using var verifyDb = new ApplicationDbContext(options);
         var clock = new FixedClock(new DateTimeOffset(2026, 1, 4, 12, 0, 0, TimeSpan.Zero));
-        var service = new DocumentSigningService(verifyDb, clock);
+        var artifactService = new StubSignedDocumentArtifactService
+        {
+            StorageKey = "documents/signed/nda-signed.pdf"
+        };
+        var service = new DocumentSigningService(verifyDb, clock, artifactService);
 
         var result = await service.CompleteSigningAsync(sessionId, "valid-token", new CompleteSigningRequest(
             RecipientEmail: "signer@example.com",
@@ -206,6 +210,11 @@ public class DocumentSigningServiceTests
         Assert.Equal(clock.UtcNow, savedSession.CompletedAtUtc);
         Assert.Equal("Jamie Example", savedSession.SignedByName);
         Assert.Equal("signer@example.com", savedSession.RecipientEmail);
+        Assert.Equal("documents/signed/nda-signed.pdf", savedDocument.SignedArtifactStorageKey);
+        Assert.Equal("documents/nda.pdf", savedDocument.StorageKey);
+        Assert.Equal(documentId, artifactService.ObservedDocumentId);
+        Assert.Equal(sessionId, artifactService.ObservedSessionId);
+        Assert.Equal("Jamie Example", artifactService.ObservedSignedByName);
     }
 
     [Fact]
@@ -245,7 +254,7 @@ public class DocumentSigningServiceTests
         }
 
         await using var verifyDb = new ApplicationDbContext(options);
-        var service = new DocumentSigningService(verifyDb, new FixedClock(new DateTimeOffset(2026, 1, 4, 12, 0, 0, TimeSpan.Zero)));
+        var service = new DocumentSigningService(verifyDb, new FixedClock(new DateTimeOffset(2026, 1, 4, 12, 0, 0, TimeSpan.Zero)), new StubSignedDocumentArtifactService());
 
         var bad = await service.RevokeSigningSessionAsync(sessionId, "other-owner");
         var good = await service.RevokeSigningSessionAsync(sessionId, "owner-1");
@@ -255,6 +264,25 @@ public class DocumentSigningServiceTests
         Assert.False(bad);
         Assert.True(good);
         Assert.NotNull(savedSession.RevokedAtUtc);
+    }
+
+    private sealed class StubSignedDocumentArtifactService : ISignedDocumentArtifactService
+    {
+        public string StorageKey { get; set; } = "documents/signed/default.pdf";
+
+        public Guid ObservedDocumentId { get; private set; }
+
+        public Guid ObservedSessionId { get; private set; }
+
+        public string? ObservedSignedByName { get; private set; }
+
+        public Task<SignedDocumentArtifactResult> CreateSignedArtifactAsync(Document document, SigningSession session, CancellationToken cancellationToken = default)
+        {
+            ObservedDocumentId = document.Id;
+            ObservedSessionId = session.Id;
+            ObservedSignedByName = session.SignedByName;
+            return Task.FromResult(new SignedDocumentArtifactResult(StorageKey));
+        }
     }
 
     private sealed class FixedClock : IClock

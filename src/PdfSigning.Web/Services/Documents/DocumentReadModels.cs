@@ -20,6 +20,7 @@ public sealed record DocumentDetailsDto(
     string OriginalFileName,
     string? ContentType,
     string? StorageKey,
+    string? SignedArtifactStorageKey,
     DocumentStatus Status,
     DateTimeOffset CreatedAtUtc,
     DateTimeOffset? CompletedAtUtc,

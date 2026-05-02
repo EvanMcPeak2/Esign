@@ -134,6 +134,7 @@ public class DetailsModelTests
                 "contract.pdf",
                 "application/pdf",
                 "documents/contract.pdf",
+                null,
                 DocumentStatus.ReadyForSigning,
                 DateTimeOffset.UtcNow,
                 null,

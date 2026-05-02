@@ -12,11 +12,13 @@ public sealed class DocumentSigningService : IDocumentSigningService
 
     private readonly ApplicationDbContext _db;
     private readonly IClock _clock;
+    private readonly ISignedDocumentArtifactService _signedDocumentArtifactService;
 
-    public DocumentSigningService(ApplicationDbContext db, IClock clock)
+    public DocumentSigningService(ApplicationDbContext db, IClock clock, ISignedDocumentArtifactService signedDocumentArtifactService)
     {
         _db = db;
         _clock = clock;
+        _signedDocumentArtifactService = signedDocumentArtifactService;
     }
 
     public async Task<CreateSigningSessionResult?> CreateSigningSessionAsync(Guid documentId, string ownerUserId, CreateSigningSessionRequest request, CancellationToken cancellationToken = default)
@@ -184,6 +186,9 @@ public sealed class DocumentSigningService : IDocumentSigningService
         var now = _clock.UtcNow;
         session.CompletedAtUtc = now;
         session.SignedByName = request.SignedByName.Trim();
+
+        var signedArtifact = await _signedDocumentArtifactService.CreateSignedArtifactAsync(session.Document, session, cancellationToken);
+        session.Document.SignedArtifactStorageKey = signedArtifact.StorageKey;
         session.Document.Status = DocumentStatus.Signed;
         session.Document.CompletedAtUtc = now;
 

@@ -6,6 +6,7 @@ public sealed class DocumentFileStore : IDocumentFileStore
 {
     private const string PrivateRootFolderName = "App_Data";
     private const string PrivateDocumentsFolderName = "documents";
+    private const string SignedDocumentsFolderName = "documents/signed";
 
     private readonly IWebHostEnvironment _environment;
 
@@ -23,6 +24,17 @@ public sealed class DocumentFileStore : IDocumentFileStore
         }
 
         return $"{PrivateDocumentsFolderName}/{Guid.NewGuid():N}{extension.ToLowerInvariant()}";
+    }
+
+    public string CreateSignedStorageKey(string originalFileName)
+    {
+        var extension = Path.GetExtension(originalFileName);
+        if (!string.Equals(extension, ".pdf", StringComparison.OrdinalIgnoreCase))
+        {
+            extension = ".pdf";
+        }
+
+        return $"{SignedDocumentsFolderName}/{Guid.NewGuid():N}{extension.ToLowerInvariant()}";
     }
 
     public async Task SaveAsync(string storageKey, Stream content, CancellationToken cancellationToken = default)

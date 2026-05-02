@@ -18,6 +18,7 @@ public class DocumentFileStoreTests
 
         var store = new DocumentFileStore(new FakeEnvironment(contentRoot, webRoot));
         var storageKey = store.CreateStorageKey("invoice.txt");
+        var signedStorageKey = store.CreateSignedStorageKey("invoice.txt");
 
         await using (var source = new MemoryStream(System.Text.Encoding.UTF8.GetBytes("secret pdf bytes")))
         {
@@ -26,6 +27,8 @@ public class DocumentFileStoreTests
 
         Assert.StartsWith("documents/", storageKey);
         Assert.EndsWith(".pdf", storageKey);
+        Assert.StartsWith("documents/signed/", signedStorageKey);
+        Assert.EndsWith(".pdf", signedStorageKey);
         Assert.True(File.Exists(Path.Combine(contentRoot, "App_Data", storageKey.Replace('/', Path.DirectorySeparatorChar))));
         Assert.False(File.Exists(Path.Combine(webRoot, storageKey.Replace('/', Path.DirectorySeparatorChar))));
 

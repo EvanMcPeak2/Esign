@@ -26,6 +26,7 @@ public class DocumentReadServiceTests
                 OriginalFileName = "contract.pdf",
                 ContentType = "application/pdf",
                 StorageKey = "uploads/contract.pdf",
+                SignedArtifactStorageKey = "documents/signed/contract-signed.pdf",
                 Status = DocumentStatus.Draft,
                 CreatedAtUtc = new DateTimeOffset(2026, 1, 2, 15, 30, 0, TimeSpan.Zero),
                 SignatureFields =
@@ -60,6 +61,7 @@ public class DocumentReadServiceTests
         Assert.Equal("contract.pdf", result.OriginalFileName);
         Assert.Equal("application/pdf", result.ContentType);
         Assert.Equal("uploads/contract.pdf", result.StorageKey);
+        Assert.Equal("documents/signed/contract-signed.pdf", result.SignedArtifactStorageKey);
         Assert.Equal(DocumentStatus.Draft, result.Status);
         Assert.Single(result.SignatureFields);
         var field = result.SignatureFields[0];

@@ -32,6 +32,7 @@ public sealed class DocumentReadService : IDocumentReadService
             document.OriginalFileName,
             document.ContentType,
             document.StorageKey,
+            document.SignedArtifactStorageKey,
             document.Status,
             document.CreatedAtUtc,
             document.CompletedAtUtc,

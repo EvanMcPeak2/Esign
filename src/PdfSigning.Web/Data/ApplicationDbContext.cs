@@ -42,6 +42,9 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
             entity.Property(x => x.StorageKey)
                 .HasMaxLength(500);
 
+            entity.Property(x => x.SignedArtifactStorageKey)
+                .HasMaxLength(500);
+
             entity.Property(x => x.Status)
                 .HasConversion<int>()
                 .IsRequired();

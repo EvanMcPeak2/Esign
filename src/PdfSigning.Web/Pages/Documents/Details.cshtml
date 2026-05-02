@@ -32,6 +32,11 @@
                     <a class="btn btn-primary" href="@Url.Page("/Documents/Pdf", new { id = Model.Document.Id })" target="_blank" rel="noopener">Open PDF in new tab</a>
                 }
 
+                @if (!string.IsNullOrWhiteSpace(Model.Document?.SignedArtifactStorageKey))
+                {
+                    <a class="btn btn-success" href="@Url.Page("/Documents/SignedPdf", new { id = Model.Document.Id })" target="_blank" rel="noopener">Open final signed PDF</a>
+                }
+
                 <div id="markReadyContainer" class="@(canMarkReady ? string.Empty : "d-none")">
                     <form method="post" asp-page-handler="MarkReady" class="d-grid">
                         <button type="submit" class="btn btn-success">Mark ready for signing</button>

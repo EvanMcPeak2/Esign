@@ -14,6 +14,8 @@ public class Document
 
     public string? StorageKey { get; set; }
 
+    public string? SignedArtifactStorageKey { get; set; }
+
     public DocumentStatus Status { get; set; } = DocumentStatus.Draft;
 
     public DateTimeOffset CreatedAtUtc { get; set; } = DateTimeOffset.UtcNow;
