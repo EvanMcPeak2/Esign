@@ -81,7 +81,7 @@ public class DocumentSigningServiceTests
         Assert.NotNull(savedDocument.SigningSessions.Single(x => x.Id == existingSessionId).RevokedAtUtc);
         Assert.Single(savedDocument.SignatureFields);
         Assert.All(savedDocument.SignatureFields, field => Assert.Equal(result.SessionId, field.SigningSessionId));
-        Assert.Equal(clock.UtcNow.AddDays(7), savedDocument.SigningSessions.Single(x => x.Id == result.SessionId).ExpiresAtUtc);
+        Assert.Equal(clock.UtcNow.AddHours(24), savedDocument.SigningSessions.Single(x => x.Id == result.SessionId).ExpiresAtUtc);
     }
 
     [Fact]

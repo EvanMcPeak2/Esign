@@ -8,7 +8,7 @@ namespace PdfSigning.Web.Services.Documents;
 
 public sealed class DocumentSigningService : IDocumentSigningService
 {
-    private const int DefaultLinkLifetimeDays = 7;
+    private static readonly TimeSpan DefaultLinkLifetime = TimeSpan.FromHours(24);
 
     private readonly ApplicationDbContext _db;
     private readonly IClock _clock;
@@ -59,7 +59,7 @@ public sealed class DocumentSigningService : IDocumentSigningService
             RecipientEmail = NormalizeEmail(request.RecipientEmail),
             AccessTokenHash = HashAccessToken(accessToken),
             CreatedAtUtc = now,
-            ExpiresAtUtc = now.AddDays(DefaultLinkLifetimeDays),
+            ExpiresAtUtc = now.Add(DefaultLinkLifetime),
         };
 
         _db.SigningSessions.Add(session);
