@@ -14,7 +14,11 @@ public class SigningSession
 
     public DateTimeOffset CreatedAtUtc { get; set; } = DateTimeOffset.UtcNow;
 
+    public DateTimeOffset ExpiresAtUtc { get; set; }
+
     public DateTimeOffset? CompletedAtUtc { get; set; }
+
+    public string? SignedByName { get; set; }
 
     public DateTimeOffset? RevokedAtUtc { get; set; }
 

@@ -29,6 +29,21 @@ If you prefer environment variables, you can also set:
 
 The Docker Compose SQL Server container still uses `.env.local` for `MSSQL_SA_PASSWORD`, and that file is ignored by git.
 
+## Secure recipient signing links
+
+This app supports a private, tokenized signing flow for external recipients:
+
+- the owner creates a secure signing link from the document details page
+- the recipient verifies access with their email before the document opens
+- the signing session expires and can be revoked
+- the raw access token is never stored in the database; only a hash is kept
+- PDFs are served through private app routes instead of public static URLs
+
+Important:
+- do not commit real passwords, tokens, connection strings, or user secrets
+- keep `.env.local` and .NET User Secrets local-only
+- do not paste real signing links or recipient emails into docs or screenshots
+
 ## Planned v1
 
 - authentication

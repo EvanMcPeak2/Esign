@@ -1,5 +1,15 @@
 :root {
     color-scheme: dark;
+    --app-surface: rgba(17, 24, 39, 0.82);
+    --app-surface-strong: rgba(15, 23, 42, 0.92);
+    --app-surface-soft: rgba(15, 23, 42, 0.68);
+    --app-border: rgba(255, 255, 255, 0.08);
+    --app-border-strong: rgba(255, 255, 255, 0.16);
+    --app-text: #e5e7eb;
+    --app-text-muted: #cbd5e1;
+    --app-input-bg: rgba(7, 12, 24, 0.78);
+    --app-input-border: rgba(148, 163, 184, 0.24);
+    --app-input-focus: rgba(59, 130, 246, 0.6);
 }
 
 html {
@@ -14,7 +24,7 @@ body {
 }
 
 .app-shell {
-    color: #e5e7eb;
+    color: var(--app-text);
 }
 
 .app-navbar {
@@ -30,8 +40,8 @@ body {
 .document-meta-card,
 .preview-note,
 .preview-placeholder {
-    background: rgba(17, 24, 39, 0.82);
-    border: 1px solid rgba(255, 255, 255, 0.08);
+    background: var(--app-surface);
+    border: 1px solid var(--app-border);
     box-shadow: 0 18px 50px rgba(0, 0, 0, 0.22);
 }
 
@@ -54,7 +64,7 @@ body {
 .document-hero:hover,
 .section-card:hover {
     transform: translateY(-2px);
-    border-color: rgba(255, 255, 255, 0.16);
+    border-color: var(--app-border-strong);
 }
 
 .feature-icon {
@@ -71,7 +81,7 @@ body {
 
 .stack-list li {
     padding: 0.5rem 0;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    border-bottom: 1px solid var(--app-border);
 }
 
 .stack-list li:last-child {
@@ -80,8 +90,8 @@ body {
 
 .modern-list .list-group-item {
     background: transparent;
-    color: #e5e7eb;
-    border-color: rgba(255, 255, 255, 0.08);
+    color: var(--app-text);
+    border-color: var(--app-border);
     padding-left: 0;
     padding-right: 0;
 }
@@ -98,7 +108,7 @@ body {
 }
 
 .preview-note {
-    color: #cbd5e1;
+    color: var(--app-text-muted);
 }
 
 .letter-spaced {
@@ -106,7 +116,66 @@ body {
 }
 
 .section-card {
-    background: rgba(15, 23, 42, 0.68);
+    background: var(--app-surface-soft);
+}
+
+.app-field-group {
+    display: grid;
+    gap: 0.5rem;
+}
+
+.form-label {
+    margin-bottom: 0;
+    font-weight: 600;
+    color: var(--app-text);
+}
+
+.form-text,
+.text-body-secondary {
+    color: var(--app-text-muted) !important;
+}
+
+.form-control,
+.form-select {
+    background-color: var(--app-input-bg);
+    color: var(--app-text);
+    border: 1px solid var(--app-input-border);
+    border-radius: 0.9rem;
+    padding: 0.75rem 1rem;
+    box-shadow: none;
+}
+
+.form-control::placeholder {
+    color: rgba(229, 231, 235, 0.48);
+}
+
+.form-control:focus,
+.form-select:focus {
+    background-color: var(--app-input-bg);
+    color: var(--app-text);
+    border-color: var(--app-input-focus);
+    box-shadow: 0 0 0 0.2rem rgba(59, 130, 246, 0.18);
+}
+
+.form-check-input {
+    border-color: rgba(148, 163, 184, 0.52);
+    background-color: rgba(255, 255, 255, 0.06);
+}
+
+.form-check-input:checked {
+    background-color: #3b82f6;
+    border-color: #3b82f6;
+}
+
+.input-group > .form-control,
+.input-group > .form-select {
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
+}
+
+.input-group > .btn {
+    border-top-left-radius: 0;
+    border-bottom-left-radius: 0;
 }
 
 .field-list {
@@ -114,13 +183,13 @@ body {
 }
 
 .field-entry {
-    background: rgba(15, 23, 42, 0.86);
-    border: 1px solid rgba(255, 255, 255, 0.08);
+    background: var(--app-surface-strong);
+    border: 1px solid var(--app-border);
     box-shadow: 0 12px 30px rgba(0, 0, 0, 0.18);
 }
 
 .field-entry:hover {
-    border-color: rgba(255, 255, 255, 0.16);
+    border-color: var(--app-border-strong);
 }
 
 .field-entry .btn-outline-danger {

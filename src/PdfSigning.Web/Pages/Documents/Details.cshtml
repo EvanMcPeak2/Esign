@@ -29,7 +29,7 @@
 
                 @if (!string.IsNullOrWhiteSpace(Model.Document?.StorageKey))
                 {
-                    <a class="btn btn-primary" href="/@Model.Document.StorageKey" target="_blank" rel="noopener">Open PDF in new tab</a>
+                    <a class="btn btn-primary" href="@Url.Page("/Documents/Pdf", new { id = Model.Document.Id })" target="_blank" rel="noopener">Open PDF in new tab</a>
                 }
 
                 <div id="markReadyContainer" class="@(canMarkReady ? string.Empty : "d-none")">
@@ -37,11 +37,39 @@
                         <button type="submit" class="btn btn-success">Mark ready for signing</button>
                     </form>
                 </div>
-            </div>
 
-            <div class="preview-note mt-3">
-                <div class="small text-uppercase text-body-secondary mb-1">Tip</div>
-                <div>Drag across the PDF to draw a field. The form on the right updates live.</div>
+                <div class="section-card rounded-4 p-3 p-lg-4 mt-3">
+                    <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
+                        <h3 class="h6 mb-0 text-uppercase text-body-secondary letter-spaced">Send secure link</h3>
+                        <span class="small text-body-secondary">No login required for the recipient.</span>
+                    </div>
+
+                    <form method="post" asp-page-handler="CreateSigningLink" class="d-grid gap-3">
+                        <div class="app-field-group">
+                            <label asp-for="SigningRecipientEmail" class="form-label">Recipient email</label>
+                            <input asp-for="SigningRecipientEmail"
+                                   class="form-control"
+                                   placeholder="recipient@example.com"
+                                   autocomplete="email"
+                                   inputmode="email"
+                                   spellcheck="false" />
+                            <div id="recipientEmailHelp" class="form-text">This address is used to verify the signer before the document opens.</div>
+                        </div>
+                        <button type="submit" class="btn btn-outline-primary">Create secure signing link</button>
+                    </form>
+
+                    @if (!string.IsNullOrWhiteSpace(Model.GeneratedSigningLink))
+                    {
+                        <div class="alert alert-success mt-3 mb-0" role="alert">
+                            <div class="fw-semibold mb-1">Secure link ready</div>
+                            <div class="small mb-2">Expires @Model.GeneratedSigningLinkExpiresAtUtc?.ToLocalTime().ToString("g")</div>
+                            <div class="input-group">
+                                <input class="form-control" value="@Model.GeneratedSigningLink" readonly />
+                                <a class="btn btn-outline-secondary" href="@Model.GeneratedSigningLink" target="_blank" rel="noopener">Open</a>
+                            </div>
+                        </div>
+                    }
+                </div>
             </div>
         </div>
     </div>
@@ -72,7 +100,7 @@ else
                 {
                     <div id="pdfPreviewShell"
                          class="pdf-preview-shell"
-                         data-pdf-url="/@Model.Document.StorageKey"
+                         data-pdf-url="@Url.Page("/Documents/Pdf", new { id = Model.Document.Id })"
                          data-document-id="@Model.Document.Id"
                          data-document-status="@Model.Document.Status"
                          data-fields='@Html.Raw(JsonSerializer.Serialize(Model.Document.SignatureFields.Select(field => new {

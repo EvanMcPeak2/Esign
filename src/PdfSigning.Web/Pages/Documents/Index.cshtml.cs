@@ -9,15 +9,15 @@ namespace PdfSigning.Web.Pages.Documents;
 [Authorize]
 public class IndexModel : PageModel
 {
-    private readonly IWebHostEnvironment _environment;
     private readonly IDocumentWorkflowService _documentWorkflowService;
     private readonly IDocumentReadService _documentReadService;
+    private readonly IDocumentFileStore _documentFileStore;
 
-    public IndexModel(IWebHostEnvironment environment, IDocumentWorkflowService documentWorkflowService, IDocumentReadService documentReadService)
+    public IndexModel(IDocumentWorkflowService documentWorkflowService, IDocumentReadService documentReadService, IDocumentFileStore documentFileStore)
     {
-        _environment = environment;
         _documentWorkflowService = documentWorkflowService;
         _documentReadService = documentReadService;
+        _documentFileStore = documentFileStore;
     }
 
     [BindProperty]
@@ -52,15 +52,10 @@ public class IndexModel : PageModel
             return Page();
         }
 
-        var uploadsDir = Path.Combine(_environment.WebRootPath, "uploads");
-        Directory.CreateDirectory(uploadsDir);
-
-        var safeFileName = $"{Guid.NewGuid():N}-{Path.GetFileName(PdfFile.FileName)}";
-        var savePath = Path.Combine(uploadsDir, safeFileName);
-
-        await using (var stream = System.IO.File.Create(savePath))
+        var safeFileName = _documentFileStore.CreateStorageKey(PdfFile.FileName);
+        await using (var stream = PdfFile.OpenReadStream())
         {
-            await PdfFile.CopyToAsync(stream);
+            await _documentFileStore.SaveAsync(safeFileName, stream);
         }
 
         var title = Path.GetFileNameWithoutExtension(PdfFile.FileName);
@@ -69,7 +64,7 @@ public class IndexModel : PageModel
             Title: string.IsNullOrWhiteSpace(title) ? PdfFile.FileName : title,
             OriginalFileName: PdfFile.FileName,
             ContentType: PdfFile.ContentType,
-            StorageKey: $"uploads/{safeFileName}",
+            StorageKey: safeFileName,
             SignatureFields:
             [
                 new SignatureFieldRequest("Signature", 1, 360m, 720m, 180m, 60m, true)

@@ -1,0 +1,102 @@
+@page "/Sign/{sessionId:guid}"
+@model PdfSigning.Web.Pages.Sign.IndexModel
+@{
+    ViewData["Title"] = "Sign document";
+}
+
+<div class="row justify-content-center">
+    <div class="col-lg-8 col-xl-7">
+        <div class="feature-card rounded-4 p-4 p-lg-5">
+            <div class="d-flex flex-wrap gap-2 mb-3">
+                <span class="badge text-bg-dark">Secure signing link</span>
+                @if (Model.PendingSession is not null)
+                {
+                    <span class="badge rounded-pill text-bg-secondary">Expires @Model.PendingSession.ExpiresAtUtc.ToLocalTime().ToString("g")</span>
+                }
+            </div>
+
+            <h1 class="h2 fw-semibold mb-2">Sign document</h1>
+            <p class="text-body-secondary mb-4">
+                This page is private to the intended recipient. Enter the email address tied to the link to unlock the document.
+            </p>
+
+            @if (!string.IsNullOrWhiteSpace(Model.StatusMessage))
+            {
+                <div class="alert @(Model.IsComplete ? "alert-success" : "alert-warning")" role="alert">
+                    @Model.StatusMessage
+                </div>
+            }
+
+            @if (Model.PendingSession is null)
+            {
+                <div class="alert alert-warning">This signing link is invalid, revoked, or expired.</div>
+            }
+            else if (Model.IsComplete)
+            {
+                <div class="section-card rounded-4 p-4">
+                    <h2 class="h5 mb-2">Document signed</h2>
+                    <p class="mb-0">@Model.StatusMessage</p>
+                </div>
+            }
+            else if (Model.SigningSession is null)
+            {
+                <div class="section-card rounded-4 p-4">
+                    <h2 class="h5 mb-3">Verify your email</h2>
+                    <p class="text-body-secondary">This secure link was created for <strong>@Model.PendingSession.RecipientEmail</strong>.</p>
+
+                    <form method="post" asp-page-handler="Verify">
+                        <input type="hidden" asp-for="AccessToken" />
+
+                        <div class="mb-3">
+                            <label asp-for="RecipientEmail" class="form-label">Recipient email</label>
+                            <input asp-for="RecipientEmail" class="form-control" autocomplete="email" />
+                        </div>
+
+                        <button type="submit" class="btn btn-primary">Unlock document</button>
+                    </form>
+                </div>
+            }
+            else
+            {
+                <div class="section-card rounded-4 p-4 mb-4">
+                    <div class="d-flex flex-wrap align-items-start justify-content-between gap-3 mb-3">
+                        <div>
+                            <h2 class="h5 mb-1">@Model.SigningSession.DocumentTitle</h2>
+                            <p class="text-body-secondary mb-0">@Model.SigningSession.OriginalFileName</p>
+                        </div>
+                        <a class="btn btn-outline-secondary" href="@Url.Page("/Sign/Pdf", new { sessionId = Model.SigningSession.SessionId, token = Model.AccessToken, recipientEmail = Model.RecipientEmail })" target="_blank" rel="noopener">Open secure PDF</a>
+                    </div>
+
+                    <div class="small text-body-secondary mb-3">
+                        Link expires @Model.SigningSession.ExpiresAtUtc.ToLocalTime().ToString("g")
+                    </div>
+
+                    @if (Model.SigningSession.SignatureFields.Count > 0)
+                    {
+                        <ul class="list-group list-group-flush mb-4">
+                            @foreach (var field in Model.SigningSession.SignatureFields)
+                            {
+                                <li class="list-group-item px-0 d-flex justify-content-between align-items-center">
+                                    <span>@field.Label</span>
+                                    <span class="badge rounded-pill text-bg-secondary">Page @field.PageNumber</span>
+                                </li>
+                            }
+                        </ul>
+                    }
+
+                    <form method="post" asp-page-handler="Complete">
+                        <input type="hidden" asp-for="AccessToken" />
+                        <input type="hidden" asp-for="RecipientEmail" />
+
+                        <div class="mb-3">
+                            <label asp-for="SignedByName" class="form-label">Full name</label>
+                            <input asp-for="SignedByName" class="form-control" autocomplete="name" />
+                        </div>
+
+                        <button type="submit" class="btn btn-success btn-lg">Complete signing</button>
+                    </form>
+                </div>
+            }
+        </div>
+    </div>
+</div>

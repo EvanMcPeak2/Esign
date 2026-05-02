@@ -365,6 +365,15 @@ if (shell) {
             actionUrl.searchParams.set('signatureFieldId', field.id);
             actionCell.action = actionUrl.toString();
 
+            const tokenSource = document.querySelector('input[name="__RequestVerificationToken"]');
+            if (tokenSource instanceof HTMLInputElement && tokenSource.value) {
+                const tokenInput = document.createElement('input');
+                tokenInput.type = 'hidden';
+                tokenInput.name = '__RequestVerificationToken';
+                tokenInput.value = tokenSource.value;
+                actionCell.appendChild(tokenInput);
+            }
+
             const button = document.createElement('button');
             button.type = 'submit';
             button.className = 'btn btn-sm btn-outline-danger';

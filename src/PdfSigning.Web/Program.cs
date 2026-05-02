@@ -18,6 +18,8 @@ builder.Services.AddScoped<IDocumentWorkflowService, DocumentWorkflowService>();
 builder.Services.AddScoped<IDocumentReadService, DocumentReadService>();
 builder.Services.AddScoped<IDocumentFieldService, DocumentFieldService>();
 builder.Services.AddScoped<IDocumentStatusService, DocumentStatusService>();
+builder.Services.AddScoped<IDocumentSigningService, DocumentSigningService>();
+builder.Services.AddScoped<IDocumentFileStore, DocumentFileStore>();
 
 builder.Services.AddDefaultIdentity<ApplicationUser>(options =>
 {

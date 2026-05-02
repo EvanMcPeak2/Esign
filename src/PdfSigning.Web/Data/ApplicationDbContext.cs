@@ -90,7 +90,13 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
             entity.Property(x => x.CreatedAtUtc)
                 .IsRequired();
 
+            entity.Property(x => x.ExpiresAtUtc)
+                .IsRequired();
+
             entity.Property(x => x.CompletedAtUtc);
+
+            entity.Property(x => x.SignedByName)
+                .HasMaxLength(200);
 
             entity.Property(x => x.RevokedAtUtc);
 

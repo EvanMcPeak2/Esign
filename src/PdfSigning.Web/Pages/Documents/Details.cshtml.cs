@@ -13,20 +13,29 @@ public class DetailsModel : PageModel
     private readonly IDocumentReadService _documentReadService;
     private readonly IDocumentFieldService _documentFieldService;
     private readonly IDocumentStatusService _documentStatusService;
+    private readonly IDocumentSigningService _documentSigningService;
 
-    public DetailsModel(IDocumentReadService documentReadService, IDocumentFieldService documentFieldService, IDocumentStatusService documentStatusService)
+    public DetailsModel(IDocumentReadService documentReadService, IDocumentFieldService documentFieldService, IDocumentStatusService documentStatusService, IDocumentSigningService documentSigningService)
     {
         _documentReadService = documentReadService;
         _documentFieldService = documentFieldService;
         _documentStatusService = documentStatusService;
+        _documentSigningService = documentSigningService;
     }
 
     [BindProperty]
     public AddSignatureFieldRequest AddField { get; set; } = new("Signature", 1, 360m, 720m, 180m, 60m, true);
 
+    [BindProperty]
+    public string SigningRecipientEmail { get; set; } = string.Empty;
+
     public DocumentDetailsDto? Document { get; private set; }
 
     public string? StatusMessage { get; private set; }
+
+    public string? GeneratedSigningLink { get; private set; }
+
+    public DateTimeOffset? GeneratedSigningLinkExpiresAtUtc { get; private set; }
 
     public async Task<IActionResult> OnGetAsync(Guid id, string? message = null)
     {
@@ -116,6 +125,40 @@ public class DetailsModel : PageModel
         }
 
         return RedirectToPage(new { id, message = "Signature field deleted." });
+    }
+
+    public async Task<IActionResult> OnPostCreateSigningLinkAsync(Guid id)
+    {
+        var ownerUserId = GetCurrentUserId();
+
+        try
+        {
+            var result = await _documentSigningService.CreateSigningSessionAsync(id, ownerUserId, new CreateSigningSessionRequest(SigningRecipientEmail));
+            if (result is null)
+            {
+                return NotFound();
+            }
+
+            StatusMessage = "Secure signing link created.";
+            GeneratedSigningLink = Url?.Page("/Sign/Index", new { sessionId = result.SessionId, token = result.AccessToken })
+                ?? $"/Sign/{result.SessionId}?token={result.AccessToken}";
+            GeneratedSigningLinkExpiresAtUtc = result.ExpiresAtUtc;
+            SigningRecipientEmail = result.RecipientEmail;
+            Document = await _documentReadService.GetDocumentDetailsAsync(id, ownerUserId);
+            return Page();
+        }
+        catch (ArgumentException ex)
+        {
+            StatusMessage = ex.Message;
+            Document = await _documentReadService.GetDocumentDetailsAsync(id, ownerUserId);
+            return Page();
+        }
+        catch (InvalidOperationException ex)
+        {
+            StatusMessage = ex.Message;
+            Document = await _documentReadService.GetDocumentDetailsAsync(id, ownerUserId);
+            return Page();
+        }
     }
 
     public async Task<IActionResult> OnPostMarkReadyAsync(Guid id)
